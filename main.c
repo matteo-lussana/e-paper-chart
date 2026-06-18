@@ -17,11 +17,12 @@ int main(void)
   for (int y = 0; y < HEIGHT; y++)
     set_pixel(framebuffer, 0, y, 1);
 
-  /* put an X in the middle */
-  for (int i = 0; i < 20; i++) {
-    set_pixel(framebuffer, 54 + i, 22 + i, 1);
-    set_pixel(framebuffer, 73 - i, 22 + i, 1);
-  }
+  float data[] = {12, 30, 7, 45, 20};
+  int n = 5;
+
+  BarChartConfig cfg = { .x0 = 10, .x1 = 600, .y0 = 5, .y1 = 200 };
+
+  draw_bar_chart(framebuffer, &cfg, data, n);
 
   save_pbm("output.pbm", framebuffer);
   return 0;
