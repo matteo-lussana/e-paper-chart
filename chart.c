@@ -29,8 +29,8 @@ void set_pixel(uint8_t *buf, int x, int y, int color)
   int bit_index  = 7 - (x % 8) ;
 
   if (color)
-    buf[byte_index] |= (1 << bit_index);   // accendi: quale operatore?
+    buf[byte_index] |= (1 << bit_index);
   else
-    buf[byte_index] &= ~(1 << bit_index);  // spegni: quale operatore?
+    buf[byte_index] &= ~(1 << bit_index);
 
 }
