@@ -1,4 +1,5 @@
 #include "chart.h"
+#include "font8x8_basic.h"
 #include <stdio.h>
 
 void save_pbm(const char *filename, uint8_t *buf)
@@ -84,6 +85,18 @@ void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, int 
 void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int color){
   for(int r = y0; r <= y1; r++){
     draw_hline(buf, x0, x1, r, 1, color);
+  }
+}
+
+void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale){
+  for (int row = 0; row < 8; row++){
+    uint8_t line = font8x8_basic[c][row];
+    for(int col = 0; col < 8; col++){
+      int bit = (line >> col) & 1;
+      if (bit) 
+        fill_rect(buf, x + col * scale, x + col * scale + scale - 1, 
+                       y + row * scale, y + row * scale + scale - 1, color);
+    }
   }
 }
 

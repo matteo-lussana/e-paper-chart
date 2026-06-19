@@ -22,7 +22,9 @@ int main(void)
 
   BarChartConfig cfg = { .x0 = 10, .x1 = 600, .y0 = 5, .y1 = 200 };
 
-  draw_bar_chart(framebuffer, &cfg, data, n);
+  // draw_bar_chart(framebuffer, &cfg, data, n);
+  
+  draw_char(framebuffer, 600, 200, 'B', 1, 3);
 
   save_pbm("output.pbm", framebuffer);
   return 0;
