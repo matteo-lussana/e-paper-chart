@@ -26,12 +26,19 @@ void set_pixel(uint8_t *buf, int x, int y, int color)
     return;
 
   int byte_index = y * STRIDE + x / 8;
-  int bit_index  = 7 - (x % 8) ;
-
+  int bit_index = 7 - (x % 8);
   if (color)
     buf[byte_index] |= (1 << bit_index);
   else
     buf[byte_index] &= ~(1 << bit_index);
+}
+
+int get_pixel(uint8_t *buf, int x, int y)
+{
+  int byte_index = y * STRIDE + x / 8;
+  int bit_index = 7 - (x % 8);
+
+  return (buf[byte_index] >> bit_index) & 1;
 }
 
 void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, int color)
