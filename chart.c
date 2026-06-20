@@ -229,7 +229,7 @@ static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *
 
   //vertical ticks
   single_space = (*y1 - *y0) / axisConfig.y_steps;
-  for(int i = 0; i < axisConfig.y_steps; i++){
+  for(int i = 0; i < axisConfig.y_steps+1; i++){
     //labels
     char label[16];
     snprintf(label, sizeof(label), "%d", (int)(y_max * i/axisConfig.y_steps));
@@ -277,13 +277,14 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
     if(y_data[i] > max_value) max_value = y_data[i];
   }
 
+  if(cfg->values_label) y1 -= 10;
+
   draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
   draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value);
 
   draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, 1, 0);
   draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, 1, 0);
 
-  //horizontal ticks
   float single_space = (x1 - x0) / n;
   for(int i = 0; i < n-1; i++){
     draw_line(buf, 
@@ -295,4 +296,34 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
               cfg->line_color,
               cfg->line_type);
   }
+  if(cfg->values_label)
+    for(int i = 0; i < n; i++){
+      int pos_x, pos_y;
+      float prec = y_data[i+1], suc = y_data[i-1], cur = y_data[i];
+      char label[16];
+      snprintf(label, sizeof(label), "%d", (int)(cur));
+
+      if(i-1 >= 0) prec = y_data[i-1];
+      if(i+1 < n) suc = y_data[i+1];
+      pos_x = x0 + single_space * (i + 0.5);
+      pos_y = y0 + y_data[i] * (y1 - y0) / max_value;
+
+      if(prec < cur && suc < cur){
+        pos_y += 10; 
+      }
+      else if(prec > cur && suc > cur){
+        pos_y -= 10;
+      }
+      else if(prec < cur && suc > cur){
+        pos_y += 10;
+        pos_x -= 10;
+      }
+      else{
+        pos_y += 10;
+        pos_x += 10;
+      }
+      draw_rect(buf, pos_x - strlen(label) * 8 / 2 - 2, pos_x + strlen(label) * 8 / 2, pos_y - 2, pos_y + 8, 1, 1, 0);
+      fill_rect(buf, pos_x - strlen(label) * 8 / 2 - 1, pos_x + strlen(label) * 8 / 2 - 1, pos_y - 1, pos_y + 8 -1, 0);
+      draw_text(buf, pos_x - strlen(label) * 8 / 2, pos_y, label, cfg->line_color, 1, 0);
+    }
 }

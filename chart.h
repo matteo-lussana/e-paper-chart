@@ -26,6 +26,7 @@ typedef struct {
   int line_type;
   int line_thickness;
   int line_color;
+  bool values_label;
   AxisConfig axisConfig;
 } LineChartConfig;
 

@@ -28,7 +28,7 @@ int main(void)
   draw_bar_chart(framebuffer, &cfg, datas, data, n);
   fill_rect(framebuffer, 600, 700, 200, 250, 2);
 
-  LineChartConfig cfg1 = { .x0 = 310, .x1 = 700, .y0 = 5, .y1 = 200, .line_color=1, .line_thickness=2, .line_type=0};
+  LineChartConfig cfg1 = { .x0 = 310, .x1 = 700, .y0 = 5, .y1 = 200, .line_color=1, .line_thickness=2, .line_type=0, .values_label=true};
   cfg1.axisConfig = axisCfg;
   draw_line_chart(framebuffer, &cfg1, datas, data, n);
 
