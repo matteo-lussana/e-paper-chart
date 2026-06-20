@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 void save_pbm(const char *filename, uint8_t *buf)
 {
@@ -131,6 +132,32 @@ void draw_vline(uint8_t *buf, int x,  int y0, int y1, int thickness, int color, 
   }
 }
 
+void draw_line(uint8_t *buf, int x0, int y0, int x1, int y1, int thickness, int color, int type){
+  int dx =  abs(x1 - x0);
+  int dy = -abs(y1 - y0);
+  int sx = (x0 < x1) ? 1 : -1;
+  int sy = (y0 < y1) ? 1 : -1;
+  int err = dx + dy;
+
+  int counter_type = 0;
+  while (1) {
+    if(!(type == 1 && counter_type % (thickness * 3) == 0) &&
+      !(type == 2 && counter_type % thickness == 0)){
+      for(int i = 0; i < thickness; i++)
+        if(dx < abs(dy))
+          set_pixel(buf, x0+i, y0, color);
+        else
+          set_pixel(buf, x0, y0+i, color);
+    }    if (x0 == x1 && y0 == y1) break;
+
+    int e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x0 += sx; }
+    if (e2 <= dx) { err += dx; y0 += sy; }
+
+    counter_type++;
+  }
+}
+
 void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, int color, int line_type){
   draw_hline(buf, x0, x1, y0, thickness, color, line_type);
   draw_hline(buf, x0, x1, y1, thickness, color, line_type);
@@ -192,16 +219,17 @@ static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *
   *x0 += axisConfig.thickness * 14;
   *y0 += axisConfig.thickness * 6;
   //horizontal ticks
+  float single_space = (*x1 - *x0) / n;
   for(int i = 0; i < n; i++){
-    float single_space = (*x1 - *x0) / n;
     //labels
     draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, *y0 - 6 * axisConfig.thickness, x_data[i], 1, 1, 0);
     //ticks
     draw_vline(buf, *x0 + single_space * (i + 0.5), *y0 - 2 * axisConfig.thickness, *y0, axisConfig.thickness, 1, 0);
   }
+
   //vertical ticks
+  single_space = (*y1 - *y0) / axisConfig.y_steps;
   for(int i = 0; i < axisConfig.y_steps; i++){
-    float single_space = (*y1 - *y0) / axisConfig.y_steps;
     //labels
     char label[16];
     snprintf(label, sizeof(label), "%d", (int)(y_max * i/axisConfig.y_steps));
@@ -231,13 +259,40 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
   draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, 1, 0);
   draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, 1, 0);
 
-  //data
-  //normalize
-
   float single_space = (x1 - x0) / n;
 
   for(int i = 0; i < n; i++){
     draw_vline(buf, x0 + single_space * (i + 0.5), y0, y0 + y_data[i] * (y1 - y0) / max_value, (single_space / 2) * 0.6, 1, 0);
+  }
+}
 
+void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n){
+  int x0 = cfg->x0;
+  int x1 = cfg->x1;
+  int y0 = cfg->y0;
+  int y1 = cfg->y1;
+
+  float max_value = y_data[0];
+  for(int i = 0; i < n; i++){
+    if(y_data[i] > max_value) max_value = y_data[i];
+  }
+
+  draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
+  draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value);
+
+  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, 1, 0);
+  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, 1, 0);
+
+  //horizontal ticks
+  float single_space = (x1 - x0) / n;
+  for(int i = 0; i < n-1; i++){
+    draw_line(buf, 
+              x0 + single_space * (i + 0.5), 
+              y0 + y_data[i] * (y1 - y0) / max_value,
+              x0 + single_space * (i+1 + 0.5),
+              y0 + y_data[i+1] * (y1 - y0) / max_value,
+              cfg->line_thickness,
+              cfg->line_color,
+              cfg->line_type);
   }
 }

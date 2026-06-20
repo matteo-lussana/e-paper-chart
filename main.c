@@ -22,11 +22,17 @@ int main(void)
   char *datas[] = {"de", "ew", "re", "aa", "rd"};
   int n = 5;
 
-  BarChartConfig cfg = { .x0 = 10, .x1 = 400, .y0 = 5, .y1 = 200 };
+  BarChartConfig cfg = { .x0 = 10, .x1 = 300, .y0 = 5, .y1 = 200 };
   AxisConfig axisCfg = {.thickness = 2, .title_size = 2, .y_title = "temp", .x_title = "time", .y_steps=8, .dash_line = true};
   cfg.axisConfig = axisCfg;
   draw_bar_chart(framebuffer, &cfg, datas, data, n);
   fill_rect(framebuffer, 600, 700, 200, 250, 2);
+
+  LineChartConfig cfg1 = { .x0 = 310, .x1 = 700, .y0 = 5, .y1 = 200, .line_color=1, .line_thickness=2, .line_type=0};
+  cfg1.axisConfig = axisCfg;
+  draw_line_chart(framebuffer, &cfg1, datas, data, n);
+
+  draw_line(framebuffer, 0, 0, 500, 200, 3, 1, 1);
   
   save_pbm("output.pbm", framebuffer);
   return 0;
