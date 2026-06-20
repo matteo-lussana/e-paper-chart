@@ -1,6 +1,7 @@
 #include "chart.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 uint8_t framebuffer[STRIDE * HEIGHT];
 
@@ -18,16 +19,15 @@ int main(void)
     set_pixel(framebuffer, 0, y, 1);
 
   float data[] = {12, 30, 7, 45, 20};
+  char *datas[] = {"de", "ew", "re", "aa", "rd"};
   int n = 5;
 
-  BarChartConfig cfg = { .x0 = 10, .x1 = 600, .y0 = 5, .y1 = 200 };
-  AxisConfig axisCfg = {.thickness = 2, .title_size = 2, .x_title = "prova"};
+  BarChartConfig cfg = { .x0 = 10, .x1 = 400, .y0 = 5, .y1 = 100 };
+  AxisConfig axisCfg = {.thickness = 2, .title_size = 2, .y_title = "temp", .x_title = "time", .y_steps=8, .dash_line = true};
   cfg.axisConfig = axisCfg;
-  draw_bar_chart(framebuffer, &cfg, data, n);
+  draw_bar_chart(framebuffer, &cfg, datas, data, n);
+  fill_rect(framebuffer, 600, 700, 200, 250, 2);
   
-  draw_char(framebuffer, 600, 200, 'B', 1, 3, 90);
-  draw_text(framebuffer, 600, 240, "DIO", 1, 3, 180);
-
   save_pbm("output.pbm", framebuffer);
   return 0;
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 
 #define WIDTH 792
 #define HEIGHT 272
@@ -11,6 +12,8 @@ typedef struct {
     int title_size;
     char *x_title;
     char *y_title;
+    int y_steps;
+    bool dash_line;
 } AxisConfig;
 
 typedef struct {
@@ -25,9 +28,9 @@ extern "C" {
 void save_pbm(const char *filename, uint8_t *buf);
 void set_pixel(uint8_t *buf, int x, int y, int color);
 int get_pixel(uint8_t *buf, int x, int y);
-void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, int color);
-void draw_vline(uint8_t *buf, int x,  int y0, int y1, int thickness, int color);
-void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, int color);
+void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, int color, int type);
+void draw_vline(uint8_t *buf, int x, int y0, int y1, int thickness, int color, int type);
+void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, int color, int line_type);
 void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int color);
 
 //text
@@ -35,7 +38,7 @@ void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale, int rot
 void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale, int rotation);
 
 //charts
-void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, float *data, int n);
+void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n);
 
 #ifdef __cplusplus
 }
