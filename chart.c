@@ -100,6 +100,12 @@ void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale){
   }
 }
 
+void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale){
+  for(int i = 0; str[i] != '\0'; i++){
+    draw_char(buf, x + i * 8 * scale, y, str[i], color, scale);
+  }
+}
+
 void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, float *data, int n){
   //axes
   draw_vline(buf, cfg->x0, cfg->y0, cfg->y1, 1, 1);

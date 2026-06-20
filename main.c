@@ -25,6 +25,7 @@ int main(void)
   // draw_bar_chart(framebuffer, &cfg, data, n);
   
   draw_char(framebuffer, 600, 200, 'B', 1, 3);
+  draw_text(framebuffer, 600, 240, "DIO", 1, 3);
 
   save_pbm("output.pbm", framebuffer);
   return 0;
