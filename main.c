@@ -21,11 +21,12 @@ int main(void)
   int n = 5;
 
   BarChartConfig cfg = { .x0 = 10, .x1 = 600, .y0 = 5, .y1 = 200 };
-
-  // draw_bar_chart(framebuffer, &cfg, data, n);
+  AxisConfig axisCfg = {.thickness = 2, .title_size = 2, .x_title = "prova"};
+  cfg.axisConfig = axisCfg;
+  draw_bar_chart(framebuffer, &cfg, data, n);
   
-  draw_char(framebuffer, 600, 200, 'B', 1, 3);
-  draw_text(framebuffer, 600, 240, "DIO", 1, 3);
+  draw_char(framebuffer, 600, 200, 'B', 1, 3, 90);
+  draw_text(framebuffer, 600, 240, "DIO", 1, 3, 180);
 
   save_pbm("output.pbm", framebuffer);
   return 0;

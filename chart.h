@@ -7,7 +7,15 @@
 #define STRIDE (WIDTH / 8)
 
 typedef struct {
+    int thickness;
+    int title_size;
+    char *x_title;
+    char *y_title;
+} AxisConfig;
+
+typedef struct {
     int x0, x1, y0, y1;
+    AxisConfig axisConfig;
 } BarChartConfig;
 
 #ifdef __cplusplus
@@ -23,8 +31,8 @@ void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, int 
 void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int color);
 
 //text
-void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale);
-void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale);
+void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale, int rotation);
+void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale, int rotation);
 
 //charts
 void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, float *data, int n);

@@ -88,28 +88,43 @@ void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int color){
   }
 }
 
-void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale){
+void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale, int rotation){
   for (int row = 0; row < 8; row++){
     uint8_t line = font8x8_basic[c][row];
     for(int col = 0; col < 8; col++){
       int bit = (line >> col) & 1;
-      if (bit) 
-        fill_rect(buf, x + col * scale, x + col * scale + scale - 1, 
-                       y + row * scale, y + row * scale + scale - 1, color);
+      if (bit){ 
+        int ox, oy;
+        switch(rotation){
+          case 0: default: ox = col; oy = row; break;
+          case 90: ox = 7 - row; oy = col; break;
+          case 180: ox = 7 - col; oy = 7 - row; break;
+          case 270: ox = row; oy = 7 - col; break;
+        }
+        fill_rect(buf, x + ox * scale, x + ox * scale + scale - 1, 
+                       y + oy * scale, y + oy * scale + scale - 1, color);
+      }
     }
   }
 }
 
-void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale){
+void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale, int rotation){
+  int pos_x, pos_y;
   for(int i = 0; str[i] != '\0'; i++){
-    draw_char(buf, x + i * 8 * scale, y, str[i], color, scale);
+    switch (rotation) {
+      case 0: default: pos_x = x + i * 8 * scale; pos_y = y; break;
+      case 90: pos_x = x; pos_y = y + i * 8 * scale; break;
+      case 180: pos_x = x - i * 8 * scale; pos_y = y; break;
+      case 270: pos_x = x; pos_y = y - i * 8 * scale; break;
+    }
+    draw_char(buf, pos_x, pos_y, str[i], color, scale, rotation);
   }
 }
 
 void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, float *data, int n){
   //axes
-  draw_vline(buf, cfg->x0, cfg->y0, cfg->y1, 1, 1);
-  draw_hline(buf, cfg->x0, cfg->x1, cfg->y0, 1, 1);
+  draw_vline(buf, cfg->x0, cfg->y0, cfg->y1, cfg->axisConfig.thickness, 1);
+  draw_hline(buf, cfg->x0, cfg->x1, cfg->y0, cfg->axisConfig.thickness, 1);
 
   //data
   //normalize
