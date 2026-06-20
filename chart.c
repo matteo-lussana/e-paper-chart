@@ -183,7 +183,7 @@ static void draw_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, co
     *x0 += axisConfig.title_size * 8;
   }
   if(axisConfig.x_title[0] != '\0'){
-    draw_text(buf, (*x1 + *x0) / 2 + strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, 1, axisConfig.title_size, 0);
+    draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, 1, axisConfig.title_size, 0);
     *y0 += axisConfig.title_size * 8;
   }
 }

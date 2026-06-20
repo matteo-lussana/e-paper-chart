@@ -22,7 +22,7 @@ int main(void)
   char *datas[] = {"de", "ew", "re", "aa", "rd"};
   int n = 5;
 
-  BarChartConfig cfg = { .x0 = 10, .x1 = 400, .y0 = 5, .y1 = 100 };
+  BarChartConfig cfg = { .x0 = 10, .x1 = 400, .y0 = 5, .y1 = 200 };
   AxisConfig axisCfg = {.thickness = 2, .title_size = 2, .y_title = "temp", .x_title = "time", .y_steps=8, .dash_line = true};
   cfg.axisConfig = axisCfg;
   draw_bar_chart(framebuffer, &cfg, datas, data, n);
