@@ -51,7 +51,6 @@ int get_pixel(uint8_t *buf, int x, int y)
 {
   int byte_index = y * STRIDE + x / 8;
   int bit_index = 7 - (x % 8);
-
   return (buf[byte_index] >> bit_index) & 1;
 }
 
@@ -79,7 +78,6 @@ void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, int color, i
           set_pixel(buf, c, r, color);
         }
         if(c % (thickness * 3) == 0) c += thickness;
-
       }
       break;
     case 2:
@@ -88,10 +86,8 @@ void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, int color, i
           set_pixel(buf, c, r, color);
         }
         if(c % thickness == 0) c += thickness;
-
       }
       break;
-
   }
 }
 
@@ -253,6 +249,8 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
     if(y_data[i] > max_value) max_value = y_data[i];
   }
 
+  if(cfg->values_label) y1 -= 15;
+
   draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
   draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value);
 
@@ -264,6 +262,17 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
   for(int i = 0; i < n; i++){
     draw_vline(buf, x0 + single_space * (i + 0.5), y0, y0 + y_data[i] * (y1 - y0) / max_value, (single_space / 2) * 0.6, 1, 0);
   }
+
+  if(cfg->values_label)
+    for(int i = 0; i < n; i++){
+      char label[16];
+      snprintf(label, sizeof(label), "%d", (int)(y_data[i]));
+
+      draw_rect(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 2, x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2, y0 + y_data[i] * (y1 - y0) / max_value - 4 + 6, y0 + y_data[i] * (y1 - y0) / max_value + 4 + 8, 1, 1, 0);
+      fill_rect(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 1, x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2 - 1, y0 + y_data[i] * (y1 - y0) / max_value + 3, y0 + y_data[i] * (y1 - y0) / max_value + 11, 0);
+      draw_text(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2,  y0 + y_data[i] * (y1 - y0) / max_value + 4, label, 1, 1, 0);
+    }
+
 }
 
 void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n){

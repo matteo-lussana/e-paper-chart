@@ -18,6 +18,7 @@ typedef struct {
 
 typedef struct {
   int x0, x1, y0, y1;
+  bool values_label;
   AxisConfig axisConfig;
 } BarChartConfig;
 
