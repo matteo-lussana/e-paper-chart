@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <math.h>
 
 void save_pbm(const char *filename, uint8_t *buf)
 {
@@ -164,6 +165,26 @@ void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, int 
 void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int color){
   for(int r = y0; r <= y1; r++){
     draw_hline(buf, x0, x1, r, 1, color, 0);
+  }
+}
+
+void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, int color){
+  int tx = cx + radius;
+  int ty = cy;
+  int fx = cx + radius * (sqrt(2)/2);
+  int fy = cy + radius * (sqrt(2)/(2));
+  thickness--;
+  while(tx != fx && ty != fy){
+    for(int i = 0; i < 2; i++){
+    fill_rect(buf, tx, tx+thickness, ty, ty+thickness, color);
+    fill_rect(buf, cx-abs(tx-cx), cx-abs(tx-cx) + thickness, ty, ty + thickness, color);
+    fill_rect(buf, cx-abs(tx-cx),cx-abs(tx-cx) + thickness, cy-abs(ty-cy), cy-abs(ty-cy) + thickness, color);
+    fill_rect(buf, tx, tx+thickness, cy-abs(ty-cy), cy-abs(ty-cy) + thickness, color);
+    int temp = tx; tx = ty; ty = temp;
+    }
+    ty++;
+    if(sqrt(pow(tx-cx, 2) + pow(ty-cy, 2)) < radius) tx++;
+    else tx--;
   }
 }
 
@@ -335,4 +356,13 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
       fill_rect(buf, pos_x - strlen(label) * 8 / 2 - 1, pos_x + strlen(label) * 8 / 2 - 1, pos_y - 1, pos_y + 8 -1, 0);
       draw_text(buf, pos_x - strlen(label) * 8 / 2, pos_y, label, cfg->line_color, 1, 0);
     }
+}
+
+void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, float *y_data, int n){
+  int x0 = cfg->x0;
+  int x1 = cfg->x1;
+  int y0 = cfg->y0;
+  int y1 = cfg->y1;
+
+  // draw_circle()
 }
