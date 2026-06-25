@@ -18,7 +18,7 @@ int main(void)
   for (int y = 0; y < HEIGHT; y++)
     set_pixel(framebuffer, 0, y, 1);
 
-  float data[] = {12, 30, 7, 45, 20};
+  float data[] = {30, 30, 30, 90, 180};
   char *datas[] = {"de", "ew", "re", "aa", "rd"};
   int n = 5;
 
@@ -34,7 +34,11 @@ int main(void)
 
   // draw_line(framebuffer, 0, 0, 500, 200, 3, 1, 1);
   set_pixel(framebuffer, 100, 100, 1);
-  draw_circle(framebuffer, 100, 100, 40, 1, 1);
+ // draw_circle(framebuffer, 100, 100, 40, 1, 1);
+
+  PieChartConfig pie_cfg = {.cx = 100, .cy = 100, .thickness = 2, .color = 1, .radius = 60, .values_label = true, .names_label = true};
+
+  draw_pie_chart(framebuffer, &pie_cfg, datas, data, n);
   
   save_pbm("output.pbm", framebuffer);
   return 0;

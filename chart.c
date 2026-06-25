@@ -359,10 +359,63 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
 }
 
 void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, float *y_data, int n){
-  int x0 = cfg->x0;
-  int x1 = cfg->x1;
-  int y0 = cfg->y0;
-  int y1 = cfg->y1;
+  int cx = cfg->cx;
+  int cy = cfg->cy;
 
-  // draw_circle()
+  float perc[n]; 
+  float sum = 0;
+  for(int i = 0; i < n; i++){
+    sum += y_data[i];
+  }
+  for(int i = 0; i < n; i++){
+    perc[i] = (y_data[i] * 2 * 3.14) / sum;
+  }
+
+  //color segments
+  float curr_angle = 0;
+  int divider = n % 2 == 0 ? 2 : 3;
+  for(int x = cx - cfg->radius; x < cx + cfg->radius; x++)
+    for(int y = cy - cfg->radius; y < cy + cfg->radius; y++){
+      if((x-cx)*(x-cx)+(y-cy)*(y-cy) < (cfg->radius)*(cfg->radius)){
+        float atan = atan2(-(y-cy), x-cx);
+        if(atan < 0) atan += 2 * 3.14;
+        for(int i = 0; i < n; i++){
+          if(atan > curr_angle && atan < curr_angle + perc[i])
+            set_pixel(buf, x, y, i%divider);
+          curr_angle += perc[i];
+        }
+        curr_angle=0;
+      }
+    }
+
+  //draw segments
+  curr_angle = 0;
+  for(int i = 0; i < n; i++){
+    curr_angle -= perc[i];
+    float px = cfg->radius * cosf(curr_angle);
+    float py = cfg->radius * sinf(curr_angle);
+    draw_line(buf, cx, cy, cx + px, cy + py, cfg->thickness, cfg->color, 0);
+  }
+
+  //draw indicators
+  curr_angle = 0;
+  if(cfg->values_label || cfg->names_label){
+    for(int i = 0; i < n; i++){
+      curr_angle += perc[i];
+      char str[32];
+      int len = 0;
+      float ix = cx + (cfg->radius / 3 * cosf(perc[i]/2 - curr_angle));
+      float iy = cy + (cfg->radius / 3 * sinf(perc[i]/2 - curr_angle));
+      float ox = cx + (cfg->radius * 1.5 * cosf(perc[i]/2 - curr_angle));
+      float oy = cy + (cfg->radius * 1.5 * sinf(perc[i]/2 - curr_angle));
+      draw_line(buf, ix, iy, ox, oy, cfg->thickness, cfg->color, 0);
+
+      if (cfg->values_label) len += snprintf(str + len, sizeof(str) - len, "%.1f%% ", perc[i]/(2*3.14)*100);
+
+      if (cfg->names_label) len += snprintf(str + len, sizeof(str) - len, "%s", x_data[i]);
+      draw_text(buf, ox, oy, str, cfg->color, 1, 0);
+    }
+  }
+
+  draw_circle(buf, cx, cy, cfg->radius, cfg->thickness, cfg->color);
 }

@@ -32,8 +32,10 @@ typedef struct {
 } LineChartConfig;
 
 typedef struct {
-  int x0, x1, y0, y1;
+  int cx, cy;
   int radius;
+  int thickness;
+  int color;
   bool values_label;
   bool names_label;
 } PieChartConfig;
