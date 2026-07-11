@@ -18,28 +18,43 @@ int main(void)
   for (int y = 0; y < HEIGHT; y++)
     set_pixel(framebuffer, 0, y, 1);
 
-  float data[] = {30, 30, 30, 90, 180};
+  float *data[] = {(float[]){30,10,15}, (float[]){30,20,15}, (float[]){30,5,20}, (float[]){90,9,20}, (float[]){180,20,50}};
   char *datas[] = {"de", "ew", "re", "aa", "rd"};
   int n = 5;
 
   BarChartConfig cfg = { .x0 = 10, .x1 = 300, .y0 = 5, .y1 = 200, .values_label = true};
   AxisConfig axisCfg = {.thickness = 2, .title_size = 2, .y_title = "temp", .x_title = "time", .y_steps=8, .dash_line = true};
   cfg.axisConfig = axisCfg;
-  // draw_bar_chart(framebuffer, &cfg, datas, data, n);
-  // fill_rect(framebuffer, 600, 700, 200, 250, 2);
+  draw_multi_bar_chart(framebuffer, &cfg, datas, data, n, 3);
 
   LineChartConfig cfg1 = { .x0 = 310, .x1 = 700, .y0 = 5, .y1 = 200, .line_color=1, .line_thickness=2, .line_type=0, .values_label=true};
   cfg1.axisConfig = axisCfg;
-  // draw_line_chart(framebuffer, &cfg1, datas, data, n);
 
-  // draw_line(framebuffer, 0, 0, 500, 200, 3, 1, 1);
-  set_pixel(framebuffer, 100, 100, 1);
- // draw_circle(framebuffer, 100, 100, 40, 1, 1);
 
   PieChartConfig pie_cfg = {.cx = 100, .cy = 100, .thickness = 2, .color = 1, .radius = 60, .values_label = true, .names_label = true};
 
-  draw_pie_chart(framebuffer, &pie_cfg, datas, data, n);
   
+  FreqChartConfig fre_cfg = {.x0 = 100, .y0=60, .border_width=3,
+  .rows_num = 4,
+  .columns_num = 12,
+  .square_size = 11,
+  .square_distance = 7
+};
+
+  int datab[] = {1,1,1,0,0,0,1,1,1,2,2,2,2,
+  1,1,1,0,0,0,1,1,1,2,2,2,2,
+1,1,1,0,0,0,1,1,1,2,2,2,2,
+1,1,1,0,0,0,1,1,1,2,2,2,2};
+
+  int x = 100;
+
+  char *month[] = {"gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"};
+  x = x + (fre_cfg.square_size/2) - (8/2);
+  for(int i=0; i<12;i++){
+    x += fre_cfg.square_distance + fre_cfg.square_size;
+  }
+
+
   save_pbm("output.pbm", framebuffer);
   return 0;
 }
