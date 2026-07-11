@@ -265,7 +265,7 @@ static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int 
     *x0 += axisConfig.title_size * 8;
   }
   if(axisConfig.y_title_right[0] != '\0'){
-    draw_text(buf, *x1, (*y1 + *y0) / 2 - strlen(axisConfig.y_title_left) * 8 * axisConfig.title_size/2, axisConfig.y_title_right, 1, axisConfig.title_size, 90);
+    draw_text(buf, *x1, (*y1 + *y0) / 2 - strlen(axisConfig.y_title_right) * 8 * axisConfig.title_size/2, axisConfig.y_title_right, 1, axisConfig.title_size, 90);
     *x1 -= axisConfig.title_size * 8 * 1.5;  
   }
   if(axisConfig.x_title[0] != '\0'){
