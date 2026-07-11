@@ -17,10 +17,29 @@ typedef struct {
 } AxisConfig;
 
 typedef struct {
+  int thickness;
+  int title_size;
+  char *x_title;
+  char *y_title_left;
+  char *y_title_right;
+  int y_steps_left;
+  int y_steps_right;
+  bool dash_line_left;
+  bool dash_line_right;
+} DoubleAxisConfig;
+
+
+typedef struct {
   int x0, x1, y0, y1;
   bool values_label;
   AxisConfig axisConfig;
 } BarChartConfig;
+
+typedef struct {
+  int x0, x1, y0, y1;
+  bool values_label;
+  DoubleAxisConfig doubleAxisConfig;
+} DoubleAxisBarChartConfig;
 
 typedef struct {
   int x0, x1, y0, y1;
@@ -39,6 +58,15 @@ typedef struct {
   bool values_label;
   bool names_label;
 } PieChartConfig;
+
+typedef struct{
+  int x0, y0;
+  int border_width;
+  int rows_num;
+  int columns_num;
+  int square_size;
+  int square_distance;
+} FreqChartConfig;
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,8 +88,11 @@ void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale
 
 //charts
 void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n);
+void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float **y_data, int data_length, int data_sets);
+void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cfg, char **x_data, float *y_data_left, float *ydata_right, int data_length);
 void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n);
 void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, float *y_data, int n);
+void draw_freq_chart(uint8_t *buf, const FreqChartConfig *cfg, int *data, int n);
 
 #ifdef __cplusplus
 }

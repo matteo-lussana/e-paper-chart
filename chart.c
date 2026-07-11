@@ -259,6 +259,65 @@ static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *
   }
 }
 
+static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig){
+  if(axisConfig.y_title_left[0] != '\0'){
+    draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title_left) * 8 * axisConfig.title_size/2, axisConfig.y_title_left, 1, axisConfig.title_size, 270);
+    *x0 += axisConfig.title_size * 8;
+  }
+  if(axisConfig.y_title_right[0] != '\0'){
+    draw_text(buf, *x1, (*y1 + *y0) / 2 + strlen(axisConfig.y_title_left) * 8 * axisConfig.title_size/2, axisConfig.y_title_left, 1, axisConfig.title_size, 270);
+    *x1 -= axisConfig.title_size * 8;
+  }
+  if(axisConfig.x_title[0] != '\0'){
+    draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, 1, axisConfig.title_size, 0);
+    *y0 += axisConfig.title_size * 8;
+  }
+}
+
+static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, char **x_data, int n, float y_max){
+  *x0 += axisConfig.thickness * 14;
+  *y0 += axisConfig.thickness * 6;
+  *y1 -= axisConfig.thickness * 6;
+  //horizontal ticks
+  float single_space = (*x1 - *x0) / n;
+  for(int i = 0; i < n; i++){
+    //labels
+    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, *y0 - 6 * axisConfig.thickness, x_data[i], 1, 1, 0);
+    //ticks
+    draw_vline(buf, *x0 + single_space * (i + 0.5), *y0 - 2 * axisConfig.thickness, *y0, axisConfig.thickness, 1, 0);
+  }
+
+  //vertical ticks left
+  single_space = (*y1 - *y0) / axisConfig.y_steps_left;
+  for(int i = 0; i < axisConfig.y_steps_left+1; i++){
+    //labels
+    char label[16];
+    snprintf(label, sizeof(label), "%d", (int)(y_max * i/axisConfig.y_steps_left));
+    draw_text(buf, *x0 - 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left - 4, label, 1, 1, 0);
+    //ticks
+    draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left, axisConfig.thickness, 1, 0);
+    if(axisConfig.dash_line_left){
+      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left, axisConfig.thickness, 2, 1);
+    }
+  }
+
+  //vertical ticks right
+  single_space = (*y1 - *y0) / axisConfig.y_steps_right;
+  for(int i = 0; i < axisConfig.y_steps_right+1; i++){
+    //labels
+    char label[16];
+    snprintf(label, sizeof(label), "%d", (int)(y_max * i/axisConfig.y_steps_right));
+    draw_text(buf, *x1 + 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right - 4, label, 1, 1, 0);
+    //ticks
+    draw_hline(buf, *x1 + 2 * axisConfig.thickness, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, 1, 0);
+    if(axisConfig.dash_line_right){
+      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, 2, 1);
+    }
+  }
+}
+
+
+
 void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n){
   int x0 = cfg->x0;
   int x1 = cfg->x1;
@@ -295,6 +354,119 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
     }
 
 }
+
+void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float **y_data, int data_length, int data_sets){
+  int x0 = cfg->x0;
+  int x1 = cfg->x1;
+  int y0 = cfg->y0;
+  int y1 = cfg->y1;
+
+  float max_value = y_data[0][0];
+  for(int i = 0; i < data_length; i++){
+    for(int j = 0; j < data_length; j++)
+      if(y_data[i][j] > max_value) max_value = y_data[i][j];
+  }
+
+  if(cfg->values_label) y1 -= 15;
+
+  draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
+  draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, data_length, max_value);
+
+  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, 1, 0);
+  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, 1, 0);
+
+  float single_space = (x1 - x0) / data_length;
+  float bars_space = single_space * 0.6;
+  float small_space = bars_space / data_sets;
+
+  for(int i = 0; i < data_length; i++){
+    for(int j = 0; j < data_sets; j++){
+      fill_rect(buf,
+                x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) - (small_space * 0.4),
+                x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) + (small_space * 0.4),
+                y0,
+                y0 + y_data[i][j] * (y1 - y0) / max_value,
+                j % 3
+                );
+
+      draw_rect(buf,
+                x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) - (small_space * 0.4),
+                x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) + (small_space * 0.4),
+                y0,
+                y0 + y_data[i][j] * (y1 - y0) / max_value,
+                small_space * 0.15,
+                1,
+                0
+                );
+    }
+  }
+}
+
+void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cfg, char **x_data, float *y_data_left, float *y_data_right, int data_length){
+  int x0 = cfg->x0;
+  int x1 = cfg->x1;
+  int y0 = cfg->y0;
+  int y1 = cfg->y1;
+
+  float max_value_left = y_data_left[0];
+  float max_value_right = y_data_right[0];
+  for(int i = 0; i < data_length; i++){
+    if(y_data_left[i] > max_value_left) max_value_left = y_data_left[i];
+    if(y_data_right[i] > max_value_right) max_value_right = y_data_right[i];
+  }
+
+  if(cfg->values_label) y1 -= 15;
+
+  draw_double_axis_title(buf, &x0, &x1, &y0, &y1, cfg->DoubleAxisConfig);
+  draw_double_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->DoubleAxisConfig, x_data, data_length, max_value);
+
+  draw_vline(buf, x0, y0, y1, cfg->DoubleAxisConfig.thickness, 1, 0);
+  draw_hline(buf, x0, x1, y0, cfg->DoubleAxisConfig.thickness, 1, 0);
+
+  float single_space = (x1 - x0) / data_length;
+  float bars_space = single_space * 0.6;
+  float small_space = bars_space / 2;
+
+  for(int i = 0; i < data_length; i++){
+    //left
+    fill_rect(buf,
+              x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) - (small_space * 0.4),
+              x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) + (small_space * 0.4),
+              y0,
+              y0 + y_data_left[i][j] * (y1 - y0) / max_value_left,
+              1
+              );
+    draw_rect(buf,
+              x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) - (small_space * 0.4),
+              x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) + (small_space * 0.4),
+              y0,
+              y0 + y_data_left[i] * (y1 - y0) / max_value_left,
+              small_space * 0.15,
+              1,
+              0
+              );
+    //right
+    fill_rect(buf,
+              x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) - (small_space * 0.4),
+              x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) + (small_space * 0.4),
+              y0,
+              y0 + y_data_right[i] * (y1 - y0) / max_value_right,
+              2 
+              );
+    draw_rect(buf,
+              x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) - (small_space * 0.4),
+              x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) + (small_space * 0.4),
+              y0,
+              y0 + y_data_right[i] * (y1 - y0) / max_value_right,
+              small_space * 0.15,
+              1,
+              0
+              );
+
+  }
+}
+
+
 
 void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n){
   int x0 = cfg->x0;
@@ -418,4 +590,25 @@ void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, floa
   }
 
   draw_circle(buf, cx, cy, cfg->radius, cfg->thickness, cfg->color);
+}
+
+void draw_freq_chart(uint8_t *buf, const FreqChartConfig *cfg, int *data, int n){
+  int start_x = cfg->x0;
+  int start_y = cfg->y0;
+  int counter = 0;
+  
+  for (int col = 0; col < cfg->columns_num; col++){
+    for (int row = 0; row < cfg->rows_num; row++){
+      fill_rect(buf, start_x, start_x + cfg->square_size, 
+                start_y, start_y + cfg->square_size,
+                data[counter]);
+      counter++;
+      draw_rect(buf, start_x, start_x + cfg->square_size, 
+                start_y, start_y + cfg->square_size,
+                cfg->border_width, 1, 0);
+      start_y += cfg->square_size + cfg->square_distance;
+    }
+    start_y = cfg->y0;
+    start_x += cfg->square_size + cfg-> square_distance;
+  }
 }
