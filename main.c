@@ -19,17 +19,18 @@ int main(void)
     set_pixel(framebuffer, 0, y, 1);
 
   float *data[] = {(float[]){30,10,15}, (float[]){30,20,15}, (float[]){30,5,20}, (float[]){90,9,20}, (float[]){180,20,50}};
+  float data_dx[] = {30,24,54,64,23};
+  float data_sx[] = {65,87,98,34,34};
   char *datas[] = {"de", "ew", "re", "aa", "rd"};
   int n = 5;
 
-  BarChartConfig cfg = { .x0 = 10, .x1 = 300, .y0 = 5, .y1 = 200, .values_label = true};
-  AxisConfig axisCfg = {.thickness = 2, .title_size = 2, .y_title = "temp", .x_title = "time", .y_steps=8, .dash_line = true};
-  cfg.axisConfig = axisCfg;
-  draw_multi_bar_chart(framebuffer, &cfg, datas, data, n, 3);
-
-  LineChartConfig cfg1 = { .x0 = 310, .x1 = 700, .y0 = 5, .y1 = 200, .line_color=1, .line_thickness=2, .line_type=0, .values_label=true};
-  cfg1.axisConfig = axisCfg;
-
+  DoubleAxisBarChartConfig cfg = { .x0 = 10, .x1 = 300, .y0 = 5, .y1 = 200, .values_label = true};
+  DoubleAxisConfig axisCfg = {.thickness = 2, .title_size = 2, 
+    .y_title_left = "temp", 
+    .y_title_right = "destra", 
+    .x_title = "time", .y_steps_left=8, .dash_line_left = true, .y_steps_right=5};
+  cfg.doubleAxisConfig = axisCfg;
+  draw_double_axis_bar_chart(framebuffer, &cfg, datas, data_sx, data_dx, n);
 
   PieChartConfig pie_cfg = {.cx = 100, .cy = 100, .thickness = 2, .color = 1, .radius = 60, .values_label = true, .names_label = true};
 

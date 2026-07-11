@@ -265,8 +265,8 @@ static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int 
     *x0 += axisConfig.title_size * 8;
   }
   if(axisConfig.y_title_right[0] != '\0'){
-    draw_text(buf, *x1, (*y1 + *y0) / 2 + strlen(axisConfig.y_title_left) * 8 * axisConfig.title_size/2, axisConfig.y_title_left, 1, axisConfig.title_size, 270);
-    *x1 -= axisConfig.title_size * 8;
+    draw_text(buf, *x1, (*y1 + *y0) / 2 - strlen(axisConfig.y_title_left) * 8 * axisConfig.title_size/2, axisConfig.y_title_right, 1, axisConfig.title_size, 90);
+    *x1 -= axisConfig.title_size * 8 * 1.5;  
   }
   if(axisConfig.x_title[0] != '\0'){
     draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, 1, axisConfig.title_size, 0);
@@ -274,7 +274,7 @@ static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int 
   }
 }
 
-static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, char **x_data, int n, float y_max){
+static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, char **x_data, int n, float y_max_left, float y_max_right){
   *x0 += axisConfig.thickness * 14;
   *y0 += axisConfig.thickness * 6;
   *y1 -= axisConfig.thickness * 6;
@@ -292,7 +292,7 @@ static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0
   for(int i = 0; i < axisConfig.y_steps_left+1; i++){
     //labels
     char label[16];
-    snprintf(label, sizeof(label), "%d", (int)(y_max * i/axisConfig.y_steps_left));
+    snprintf(label, sizeof(label), "%d", (int)(y_max_left * i/axisConfig.y_steps_left));
     draw_text(buf, *x0 - 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left - 4, label, 1, 1, 0);
     //ticks
     draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left, axisConfig.thickness, 1, 0);
@@ -306,10 +306,10 @@ static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0
   for(int i = 0; i < axisConfig.y_steps_right+1; i++){
     //labels
     char label[16];
-    snprintf(label, sizeof(label), "%d", (int)(y_max * i/axisConfig.y_steps_right));
-    draw_text(buf, *x1 + 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right - 4, label, 1, 1, 0);
+    snprintf(label, sizeof(label), "%d", (int)(y_max_right * i/axisConfig.y_steps_right));
+    draw_text(buf, *x1 + 4, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right - 4, label, 1, 1, 0);
     //ticks
-    draw_hline(buf, *x1 + 2 * axisConfig.thickness, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, 1, 0);
+    draw_hline(buf, *x1, *x1 + 2 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, 1, 0);
     if(axisConfig.dash_line_right){
       draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, 2, 1);
     }
@@ -417,11 +417,12 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
 
   if(cfg->values_label) y1 -= 15;
 
-  draw_double_axis_title(buf, &x0, &x1, &y0, &y1, cfg->DoubleAxisConfig);
-  draw_double_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->DoubleAxisConfig, x_data, data_length, max_value);
+  draw_double_axis_title(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig);
+  draw_double_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig, x_data, data_length, max_value_left, max_value_right);
 
-  draw_vline(buf, x0, y0, y1, cfg->DoubleAxisConfig.thickness, 1, 0);
-  draw_hline(buf, x0, x1, y0, cfg->DoubleAxisConfig.thickness, 1, 0);
+  draw_vline(buf, x0, y0, y1, cfg->doubleAxisConfig.thickness, 1, 0);
+  draw_vline(buf, x1, y0, y1, cfg->doubleAxisConfig.thickness, 1, 0);
+  draw_hline(buf, x0, x1, y0, cfg->doubleAxisConfig.thickness, 1, 0);
 
   float single_space = (x1 - x0) / data_length;
   float bars_space = single_space * 0.6;
@@ -433,7 +434,7 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) - (small_space * 0.4),
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) + (small_space * 0.4),
               y0,
-              y0 + y_data_left[i][j] * (y1 - y0) / max_value_left,
+              y0 + y_data_left[i] * (y1 - y0) / max_value_left,
               1
               );
     draw_rect(buf,
