@@ -24,7 +24,7 @@ void save_pbm(const char *filename, uint8_t *buf)
   printf("Saved: %s (%dx%d)\n", filename, WIDTH, HEIGHT);
 }
 
-void set_pixel(uint8_t *buf, int x, int y, int color)
+void set_pixel(uint8_t *buf, int x, int y, Color color)
 {
   /* check the edges */
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT)
@@ -33,13 +33,13 @@ void set_pixel(uint8_t *buf, int x, int y, int color)
   int byte_index = y * STRIDE + x / 8;
   int bit_index = 7 - (x % 8);
   switch(color){
-    case 0:
+    case COLOR_WHITE:
       buf[byte_index] &= ~(1 << bit_index);
       break;
-    case 1:
+    case COLOR_BLACK:
       buf[byte_index] |= (1 << bit_index);
       break;
-    case 2:
+    case COLOR_GRAY:
       if((x + y) % 2 == 0)
         buf[byte_index] &= ~(1 << bit_index);
       else
@@ -55,7 +55,7 @@ int get_pixel(uint8_t *buf, int x, int y)
   return (buf[byte_index] >> bit_index) & 1;
 }
 
-void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, int color, int type) //type: 0->line, 1->dashed, 2->dotted
+void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, Color color, LineType type) //type: 0->line, 1->dashed, 2->dotted
 {
   int up, down;
   if(thickness % 2 == 1){
@@ -92,7 +92,7 @@ void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, int color, i
   }
 }
 
-void draw_vline(uint8_t *buf, int x,  int y0, int y1, int thickness, int color, int type) //type: 0->line, 1->dashed, 2->dotted
+void draw_vline(uint8_t *buf, int x,  int y0, int y1, int thickness, Color color, LineType type) //type: 0->line, 1->dashed, 2->dotted
 {
   int left, right;
   if(thickness % 2 == 1){
@@ -129,7 +129,7 @@ void draw_vline(uint8_t *buf, int x,  int y0, int y1, int thickness, int color, 
   }
 }
 
-void draw_line(uint8_t *buf, int x0, int y0, int x1, int y1, int thickness, int color, int type){
+void draw_line(uint8_t *buf, int x0, int y0, int x1, int y1, int thickness, Color color, LineType type){
   int dx =  abs(x1 - x0);
   int dy = -abs(y1 - y0);
   int sx = (x0 < x1) ? 1 : -1;
@@ -155,20 +155,20 @@ void draw_line(uint8_t *buf, int x0, int y0, int x1, int y1, int thickness, int 
   }
 }
 
-void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, int color, int line_type){
+void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, Color color, LineType line_type){
   draw_hline(buf, x0, x1, y0, thickness, color, line_type);
   draw_hline(buf, x0, x1, y1, thickness, color, line_type);
   draw_vline(buf, x0, y0, y1, thickness, color, line_type);
   draw_vline(buf, x1, y0, y1, thickness, color, line_type);
 }
 
-void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int color){
+void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, Color color){
   for(int r = y0; r <= y1; r++){
-    draw_hline(buf, x0, x1, r, 1, color, 0);
+    draw_hline(buf, x0, x1, r, 1, color, LINE_SOLID);
   }
 }
 
-void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, int color){
+void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, Color color){
   int tx = cx + radius;
   int ty = cy;
   int fx = cx + radius * (sqrt(2)/2);
@@ -188,7 +188,7 @@ void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, int co
   }
 }
 
-void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale, int rotation){
+void draw_char(uint8_t *buf, int x, int y, char c, Color color, int scale, int rotation){
   for (int row = 0; row < 8; row++){
     uint8_t line = font8x8_basic[c][row];
     for(int col = 0; col < 8; col++){
@@ -208,7 +208,7 @@ void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale, int rot
   }
 }
 
-void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale, int rotation){
+void draw_text(uint8_t *buf, int x, int y, const char *str, Color color, int scale, int rotation){
   int pos_x, pos_y;
   for(int i = 0; str[i] != '\0'; i++){
     switch (rotation) {
@@ -223,11 +223,11 @@ void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale
 
 static void draw_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const AxisConfig axisConfig){
   if(axisConfig.y_title[0] != '\0'){
-    draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title) * 8 * axisConfig.title_size/2, axisConfig.y_title, 1, axisConfig.title_size, 270);
+    draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title) * 8 * axisConfig.title_size/2, axisConfig.y_title, COLOR_BLACK, axisConfig.title_size, 270);
     *x0 += axisConfig.title_size * 8;
   }
   if(axisConfig.x_title[0] != '\0'){
-    draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, 1, axisConfig.title_size, 0);
+    draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
     *y0 += axisConfig.title_size * 8;
   }
 }
@@ -239,9 +239,9 @@ static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *
   float single_space = (*x1 - *x0) / n;
   for(int i = 0; i < n; i++){
     //labels
-    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, *y0 - 6 * axisConfig.thickness, x_data[i], 1, 1, 0);
+    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, *y0 - 6 * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
     //ticks
-    draw_vline(buf, *x0 + single_space * (i + 0.5), *y0 - 2 * axisConfig.thickness, *y0, axisConfig.thickness, 1, 0);
+    draw_vline(buf, *x0 + single_space * (i + 0.5), *y0 - 2 * axisConfig.thickness, *y0, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
   }
 
   //vertical ticks
@@ -250,26 +250,26 @@ static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *
     //labels
     char label[16];
     snprintf(label, sizeof(label), "%d", (int)(y_max * i/axisConfig.y_steps));
-    draw_text(buf, *x0 - 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps - 4, label, 1, 1, 0);
+    draw_text(buf, *x0 - 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps - 4, label, COLOR_BLACK, 1, 0);
     //ticks
-    draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, *y0 + (*y1 - *y0) * i / axisConfig.y_steps, axisConfig.thickness, 1, 0);
+    draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, *y0 + (*y1 - *y0) * i / axisConfig.y_steps, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
     if(axisConfig.dash_line){
-      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps, axisConfig.thickness, 2, 1);
+      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps, axisConfig.thickness, COLOR_GRAY, LINE_DASHED);
     }
   }
 }
 
 static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig){
   if(axisConfig.y_title_left[0] != '\0'){
-    draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title_left) * 8 * axisConfig.title_size/2, axisConfig.y_title_left, 1, axisConfig.title_size, 270);
+    draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title_left) * 8 * axisConfig.title_size/2, axisConfig.y_title_left, COLOR_BLACK, axisConfig.title_size, 270);
     *x0 += axisConfig.title_size * 8;
   }
   if(axisConfig.y_title_right[0] != '\0'){
-    draw_text(buf, *x1, (*y1 + *y0) / 2 - strlen(axisConfig.y_title_right) * 8 * axisConfig.title_size/2, axisConfig.y_title_right, 1, axisConfig.title_size, 90);
+    draw_text(buf, *x1, (*y1 + *y0) / 2 - strlen(axisConfig.y_title_right) * 8 * axisConfig.title_size/2, axisConfig.y_title_right, COLOR_BLACK, axisConfig.title_size, 90);
     *x1 -= axisConfig.title_size * 8 * 1.5;  
   }
   if(axisConfig.x_title[0] != '\0'){
-    draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, 1, axisConfig.title_size, 0);
+    draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
     *y0 += axisConfig.title_size * 8;
   }
 }
@@ -282,9 +282,9 @@ static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0
   float single_space = (*x1 - *x0) / n;
   for(int i = 0; i < n; i++){
     //labels
-    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, *y0 - 6 * axisConfig.thickness, x_data[i], 1, 1, 0);
+    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, *y0 - 6 * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
     //ticks
-    draw_vline(buf, *x0 + single_space * (i + 0.5), *y0 - 2 * axisConfig.thickness, *y0, axisConfig.thickness, 1, 0);
+    draw_vline(buf, *x0 + single_space * (i + 0.5), *y0 - 2 * axisConfig.thickness, *y0, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
   }
 
   //vertical ticks left
@@ -293,11 +293,11 @@ static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0
     //labels
     char label[16];
     snprintf(label, sizeof(label), "%d", (int)(y_max_left * i/axisConfig.y_steps_left));
-    draw_text(buf, *x0 - 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left - 4, label, 1, 1, 0);
+    draw_text(buf, *x0 - 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left - 4, label, COLOR_BLACK, 1, 0);
     //ticks
-    draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left, axisConfig.thickness, 1, 0);
+    draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
     if(axisConfig.dash_line_left){
-      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left, axisConfig.thickness, 2, 1);
+      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left, axisConfig.thickness, COLOR_GRAY, LINE_DASHED);
     }
   }
 
@@ -307,11 +307,11 @@ static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0
     //labels
     char label[16];
     snprintf(label, sizeof(label), "%d", (int)(y_max_right * i/axisConfig.y_steps_right));
-    draw_text(buf, *x1 + 4, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right - 4, label, 1, 1, 0);
+    draw_text(buf, *x1 + 4, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right - 4, label, COLOR_BLACK, 1, 0);
     //ticks
-    draw_hline(buf, *x1, *x1 + 2 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, 1, 0);
+    draw_hline(buf, *x1, *x1 + 2 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
     if(axisConfig.dash_line_right){
-      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, 2, 1);
+      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, COLOR_GRAY, LINE_DASHED);
     }
   }
 }
@@ -325,10 +325,10 @@ static void draw_legend(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, bool l
   }
   int start = (*x0 + *x1)/2 - legend_space/2;
   for(int i = 0; i < n; i++){
-    fill_rect(buf, start, start + 12, *y1, *y1 + 12, (i+1)%3);
-    draw_rect(buf, start, start + 12, *y1, *y1 + 12, 2, 1, 0);
+    fill_rect(buf, start, start + 12, *y1, *y1 + 12, (Color)((i+1)%3));
+    draw_rect(buf, start, start + 12, *y1, *y1 + 12, 2, COLOR_BLACK, LINE_SOLID);
     start += 20;
-    draw_text(buf, start, *y1 + 3, labels[i], 1, 1, 0);
+    draw_text(buf, start, *y1 + 3, labels[i], COLOR_BLACK, 1, 0);
     start += strlen(labels[i]) * 8 + 15;
   }
 }
@@ -351,13 +351,13 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
   draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
   draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value);
 
-  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, 1, 0);
-  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, 1, 0);
+  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
 
   float single_space = (x1 - x0) / n;
 
   for(int i = 0; i < n; i++){
-    draw_vline(buf, x0 + single_space * (i + 0.5), y0, y0 + y_data[i] * (y1 - y0) / max_value, (single_space / 2) * 0.6, 1, 0);
+    draw_vline(buf, x0 + single_space * (i + 0.5), y0, y0 + y_data[i] * (y1 - y0) / max_value, (single_space / 2) * 0.6, COLOR_BLACK, LINE_SOLID);
   }
 
   if(cfg->values_label)
@@ -365,9 +365,9 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
       char label[16];
       snprintf(label, sizeof(label), "%d", (int)(y_data[i]));
 
-      draw_rect(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 2, x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2, y0 + y_data[i] * (y1 - y0) / max_value - 4 + 6, y0 + y_data[i] * (y1 - y0) / max_value + 4 + 8, 1, 1, 0);
-      fill_rect(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 1, x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2 - 1, y0 + y_data[i] * (y1 - y0) / max_value + 3, y0 + y_data[i] * (y1 - y0) / max_value + 11, 0);
-      draw_text(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2,  y0 + y_data[i] * (y1 - y0) / max_value + 4, label, 1, 1, 0);
+      draw_rect(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 2, x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2, y0 + y_data[i] * (y1 - y0) / max_value - 4 + 6, y0 + y_data[i] * (y1 - y0) / max_value + 4 + 8, 1, COLOR_BLACK, LINE_SOLID);
+      fill_rect(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 1, x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2 - 1, y0 + y_data[i] * (y1 - y0) / max_value + 3, y0 + y_data[i] * (y1 - y0) / max_value + 11, COLOR_WHITE);
+      draw_text(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2,  y0 + y_data[i] * (y1 - y0) / max_value + 4, label, COLOR_BLACK, 1, 0);
     }
 
 }
@@ -389,8 +389,8 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
   draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
   draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, data_length, max_value);
 
-  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, 1, 0);
-  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, 1, 0);
+  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
 
   float single_space = (x1 - x0) / data_length;
   float bars_space = single_space * 0.6;
@@ -403,7 +403,7 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
                 x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) + (small_space * 0.4),
                 y0,
                 y0 + y_data[i][j] * (y1 - y0) / max_value,
-                j % 3
+                (Color)(j % 3)
                 );
 
       draw_rect(buf,
@@ -412,8 +412,8 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
                 y0,
                 y0 + y_data[i][j] * (y1 - y0) / max_value,
                 small_space * 0.15,
-                1,
-                0
+                COLOR_BLACK,
+                LINE_SOLID
                 );
     }
   }
@@ -438,9 +438,9 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
   draw_double_axis_title(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig);
   draw_double_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig, x_data, data_length, max_value_left, max_value_right);
 
-  draw_vline(buf, x0, y0, y1, cfg->doubleAxisConfig.thickness, 1, 0);
-  draw_vline(buf, x1, y0, y1, cfg->doubleAxisConfig.thickness, 1, 0);
-  draw_hline(buf, x0, x1, y0, cfg->doubleAxisConfig.thickness, 1, 0);
+  draw_vline(buf, x0, y0, y1, cfg->doubleAxisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  draw_vline(buf, x1, y0, y1, cfg->doubleAxisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  draw_hline(buf, x0, x1, y0, cfg->doubleAxisConfig.thickness, COLOR_BLACK, LINE_SOLID);
 
   float single_space = (x1 - x0) / data_length;
   float bars_space = single_space * 0.6;
@@ -453,7 +453,7 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) + (small_space * 0.4),
               y0,
               y0 + y_data_left[i] * (y1 - y0) / max_value_left,
-              1
+              COLOR_BLACK
               );
     draw_rect(buf,
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) - (small_space * 0.4),
@@ -461,8 +461,8 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
               y0,
               y0 + y_data_left[i] * (y1 - y0) / max_value_left,
               small_space * 0.15,
-              1,
-              0
+              COLOR_BLACK,
+              LINE_SOLID
               );
     //right
     fill_rect(buf,
@@ -470,7 +470,7 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) + (small_space * 0.4),
               y0,
               y0 + y_data_right[i] * (y1 - y0) / max_value_right,
-              2 
+              COLOR_GRAY 
               );
     draw_rect(buf,
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) - (small_space * 0.4),
@@ -478,8 +478,8 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
               y0,
               y0 + y_data_right[i] * (y1 - y0) / max_value_right,
               small_space * 0.15,
-              1,
-              0
+              COLOR_BLACK,
+              LINE_SOLID
               );
 
   }
@@ -503,8 +503,8 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
   draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
   draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value);
 
-  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, 1, 0);
-  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, 1, 0);
+  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
 
   float single_space = (x1 - x0) / n;
   for(int i = 0; i < n-1; i++){
@@ -543,8 +543,8 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
         pos_y += 10;
         pos_x += 10;
       }
-      draw_rect(buf, pos_x - strlen(label) * 8 / 2 - 2, pos_x + strlen(label) * 8 / 2, pos_y - 2, pos_y + 8, 1, 1, 0);
-      fill_rect(buf, pos_x - strlen(label) * 8 / 2 - 1, pos_x + strlen(label) * 8 / 2 - 1, pos_y - 1, pos_y + 8 -1, 0);
+      draw_rect(buf, pos_x - strlen(label) * 8 / 2 - 2, pos_x + strlen(label) * 8 / 2, pos_y - 2, pos_y + 8, 1, COLOR_BLACK, LINE_SOLID);
+      fill_rect(buf, pos_x - strlen(label) * 8 / 2 - 1, pos_x + strlen(label) * 8 / 2 - 1, pos_y - 1, pos_y + 8 -1, COLOR_WHITE);
       draw_text(buf, pos_x - strlen(label) * 8 / 2, pos_y, label, cfg->line_color, 1, 0);
     }
 }
@@ -552,7 +552,6 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
 void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, float *y_data, int n){
   int cx = cfg->cx;
   int cy = cfg->cy;
-  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2);
   float perc[n]; 
   float sum = 0;
   for(int i = 0; i < n; i++){
@@ -572,7 +571,7 @@ void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, floa
         if(atan < 0) atan += 2 * 3.14;
         for(int i = 0; i < n; i++){
           if(atan > curr_angle && atan < curr_angle + perc[i])
-            set_pixel(buf, x, y, i%divider);
+            set_pixel(buf, x, y, (Color)(i%divider));
           curr_angle += perc[i];
         }
         curr_angle=0;
@@ -585,7 +584,7 @@ void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, floa
     curr_angle -= perc[i];
     float px = cfg->radius * cosf(curr_angle);
     float py = cfg->radius * sinf(curr_angle);
-    draw_line(buf, cx, cy, cx + px, cy + py, cfg->thickness, cfg->color, 0);
+    draw_line(buf, cx, cy, cx + px, cy + py, cfg->thickness, cfg->color, LINE_SOLID);
   }
 
   //draw indicators
@@ -599,7 +598,7 @@ void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, floa
       float iy = cy + (cfg->radius / 3 * sinf(perc[i]/2 - curr_angle));
       float ox = cx + (cfg->radius * 1.5 * cosf(perc[i]/2 - curr_angle));
       float oy = cy + (cfg->radius * 1.5 * sinf(perc[i]/2 - curr_angle));
-      draw_line(buf, ix, iy, ox, oy, cfg->thickness, cfg->color, 0);
+      draw_line(buf, ix, iy, ox, oy, cfg->thickness, cfg->color, LINE_SOLID);
 
       if (cfg->values_label) len += snprintf(str + len, sizeof(str) - len, "%.1f%% ", perc[i]/(2*3.14)*100);
 
@@ -620,11 +619,11 @@ void draw_freq_chart(uint8_t *buf, const FreqChartConfig *cfg, int *data, int n)
     for (int row = 0; row < cfg->rows_num; row++){
       fill_rect(buf, start_x, start_x + cfg->square_size, 
                 start_y, start_y + cfg->square_size,
-                data[counter]);
+                (Color)data[counter]);
       counter++;
-      draw_rect(buf, start_x, start_x + cfg->square_size, 
+      draw_rect(buf, start_x, start_x + cfg->square_size,
                 start_y, start_y + cfg->square_size,
-                cfg->border_width, 1, 0);
+                cfg->border_width, COLOR_BLACK, LINE_SOLID);
       start_y += cfg->square_size + cfg->square_distance;
     }
     start_y = cfg->y0;

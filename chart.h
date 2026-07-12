@@ -7,6 +7,18 @@
 
 #define STRIDE (WIDTH / 8)
 
+typedef enum {
+  COLOR_WHITE = 0,
+  COLOR_BLACK = 1,
+  COLOR_GRAY  = 2
+} Color;
+
+typedef enum {
+  LINE_SOLID  = 0,
+  LINE_DASHED = 1,
+  LINE_DOTTED = 2
+} LineType;
+
 typedef struct {
   bool legend;
   char **labels;
@@ -49,9 +61,9 @@ typedef struct {
 
 typedef struct {
   int x0, x1, y0, y1;
-  int line_type;
+  LineType line_type;
   int line_thickness;
-  int line_color;
+  Color line_color;
   bool values_label;
   AxisConfig axisConfig;
 } LineChartConfig;
@@ -60,7 +72,7 @@ typedef struct {
   int cx, cy;
   int radius;
   int thickness;
-  int color;
+  Color color;
   bool values_label;
   bool names_label;
 } PieChartConfig;
@@ -79,18 +91,56 @@ extern "C" {
 #endif
 
 void save_pbm(const char *filename, uint8_t *buf);
-void set_pixel(uint8_t *buf, int x, int y, int color);
+/**
+ * It set the color of a single pixel in the framebuffer
+ *
+ * @param buf           framebuffer
+ * @param x,y           pixel coordinates
+ * @param color         pixel color (COLOR_WHITE = 0, COLOR_BLACK = 1, COLOR_GRAY = 2)
+ */
+void set_pixel(uint8_t *buf, int x, int y, Color color);
+
+/**
+ * Return the color of a single pixel in the framebuffer
+ *
+ * @param buf           framebuffer
+ * @param x,y           pixel coordinates
+ * @return Color of the pixel
+ */
 int get_pixel(uint8_t *buf, int x, int y);
-void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, int color, int type);
-void draw_vline(uint8_t *buf, int x, int y0, int y1, int thickness, int color, int type);
-void draw_line(uint8_t *buf, int x0, int y0, int x1, int y1, int thickness, int color, int type);
-void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, int color, int line_type);
-void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int color);
-void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, int color);
+
+/**
+ * Draw horizontal line
+ *
+ * @param buf           framebuffer
+ * @param x0, x1        starting and final point on x-axis
+ * @param y             value on y-axis
+ * @param thickness     thickness of the line
+ * @param color         line color (COLOR_WHITE = 0, COLOR_BLACK = 1, COLOR_GRAY = 2)
+ * @param type          line type (LINE_SOLID  = 0, LINE_DASHED = 1, LINE_DOTTED = 2)
+ */
+void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, Color color, LineType type);
+
+/**
+ * Draw vertical line
+ *
+ * @param buf           framebuffer
+ * @param x             value on x-axis
+ * @param y0, y1        starting and final point on y-axis
+ * @param thickness     thickness of the line
+ * @param color         line color (COLOR_WHITE = 0, COLOR_BLACK = 1, COLOR_GRAY = 2)
+ * @param type          line type (LINE_SOLID  = 0, LINE_DASHED = 1, LINE_DOTTED = 2)
+ */
+
+void draw_vline(uint8_t *buf, int x, int y0, int y1, int thickness, Color color, LineType type);
+void draw_line(uint8_t *buf, int x0, int y0, int x1, int y1, int thickness, Color color, LineType type);
+void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, Color color, LineType line_type);
+void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, Color color);
+void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, Color color);
 
 //text
-void draw_char(uint8_t *buf, int x, int y, char c, int color, int scale, int rotation);
-void draw_text(uint8_t *buf, int x, int y, const char *str, int color, int scale, int rotation);
+void draw_char(uint8_t *buf, int x, int y, char c, Color color, int scale, int rotation);
+void draw_text(uint8_t *buf, int x, int y, const char *str, Color color, int scale, int rotation);
 
 //charts
 void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n);
