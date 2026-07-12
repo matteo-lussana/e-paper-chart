@@ -8,6 +8,11 @@
 #define STRIDE (WIDTH / 8)
 
 typedef struct {
+  bool legend;
+  char **labels;
+} LegendConfig;
+
+typedef struct {
   int thickness;
   int title_size;
   char *x_title;
@@ -28,17 +33,18 @@ typedef struct {
   bool dash_line_right;
 } DoubleAxisConfig;
 
-
 typedef struct {
   int x0, x1, y0, y1;
   bool values_label;
   AxisConfig axisConfig;
+  LegendConfig legendConfig;
 } BarChartConfig;
 
 typedef struct {
   int x0, x1, y0, y1;
   bool values_label;
   DoubleAxisConfig doubleAxisConfig;
+  LegendConfig legendConfig;
 } DoubleAxisBarChartConfig;
 
 typedef struct {

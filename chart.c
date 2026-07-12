@@ -316,6 +316,23 @@ static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0
   }
 }
 
+static void draw_legend(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, bool legend, char **labels, int n){
+  if(!legend) return;
+  *y1 -= 20;
+  float legend_space = 20 * n + 15 * (n-1);
+  for(int i = 0; i < n; i++){
+    legend_space += strlen(labels[i]) * 8;
+  }
+  int start = (*x0 + *x1)/2 - legend_space/2;
+  for(int i = 0; i < n; i++){
+    fill_rect(buf, start, start + 12, *y1, *y1 + 12, (i+1)%3);
+    draw_rect(buf, start, start + 12, *y1, *y1 + 12, 2, 1, 0);
+    start += 20;
+    draw_text(buf, start, *y1 + 3, labels[i], 1, 1, 0);
+    start += strlen(labels[i]) * 8 + 15;
+  }
+}
+
 
 
 void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n){
@@ -368,7 +385,7 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
   }
 
   if(cfg->values_label) y1 -= 15;
-
+  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2);
   draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
   draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, data_length, max_value);
 
@@ -417,6 +434,7 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
 
   if(cfg->values_label) y1 -= 15;
 
+  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2);
   draw_double_axis_title(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig);
   draw_double_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig, x_data, data_length, max_value_left, max_value_right);
 
@@ -534,7 +552,7 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
 void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, float *y_data, int n){
   int cx = cfg->cx;
   int cy = cfg->cy;
-
+  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2);
   float perc[n]; 
   float sum = 0;
   for(int i = 0; i < n; i++){
