@@ -8,7 +8,7 @@
  * then hand the framebuffer to the display driver on the target device.
  *
  * @author  Matteo Lussana
- * @version 1.0.0
+ * @version 0.1.0
  * @license MIT
  */
 #pragma once
