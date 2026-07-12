@@ -24,11 +24,13 @@ int main(void)
   char *datas[] = {"de", "ew", "re", "aa", "rd"};
   int n = 5;
 
+  LegendConfig lg = {.legend = true, .labels = (char*[]){"prova", "siuuuum"}};
   DoubleAxisBarChartConfig cfg = { .x0 = 10, .x1 = 300, .y0 = 5, .y1 = 200, .values_label = true};
+  cfg.legendConfig = lg;
   DoubleAxisConfig axisCfg = {.thickness = 2, .title_size = 2, 
     .y_title_left = "temp", 
     .y_title_right = "destra", 
-    .x_title = "time", .y_steps_left=8, .dash_line_left = true, .y_steps_right=5};
+    .x_title = "time", .y_steps_left=8, .dash_line_left = true};
   cfg.doubleAxisConfig = axisCfg;
   draw_double_axis_bar_chart(framebuffer, &cfg, datas, data_sx, data_dx, n);
 
