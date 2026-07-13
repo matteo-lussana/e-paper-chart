@@ -131,7 +131,8 @@ void draw_vline(uint8_t *buf, int x,  int y0, int y1, int thickness, Color color
   }
 }
 
-void draw_line(uint8_t *buf, int x0, int y0, int x1, int y1, int thickness, Color color, LineType type){
+void draw_line(uint8_t *buf, int x0, int y0, int x1, int y1, int thickness, Color color, LineType type)
+{
   int dx =  abs(x1 - x0);
   int dy = -abs(y1 - y0);
   int sx = (x0 < x1) ? 1 : -1;
@@ -157,14 +158,16 @@ void draw_line(uint8_t *buf, int x0, int y0, int x1, int y1, int thickness, Colo
   }
 }
 
-void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, Color color, LineType line_type){
+void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, Color color, LineType line_type)
+{
   draw_hline(buf, x0, x1, y0, thickness, color, line_type);
   draw_hline(buf, x0, x1, y1, thickness, color, line_type);
   draw_vline(buf, x0, y0, y1, thickness, color, line_type);
   draw_vline(buf, x1, y0, y1, thickness, color, line_type);
 }
 
-void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, Color color){
+void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, Color color)
+{
   if (x0 > x1) { int t = x0; x0 = x1; x1 = t; }
   if (y0 > y1) { int t = y0; y0 = y1; y1 = t; }
   for(int r = y0; r <= y1; r++){
@@ -172,7 +175,8 @@ void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, Color color){
   }
 }
 
-void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, Color color){
+void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, Color color)
+{
   int tx = cx + radius;
   int ty = cy;
   int fx = cx + radius * (sqrt(2)/2);
@@ -192,7 +196,8 @@ void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, Color 
   }
 }
 
-void draw_char(uint8_t *buf, int x, int y, char c, Color color, int scale, int rotation){
+void draw_char(uint8_t *buf, int x, int y, char c, Color color, int scale, int rotation)
+{
   for (int row = 0; row < 8; row++){
     uint8_t line = font8x8_basic[c][row];
     for(int col = 0; col < 8; col++){
@@ -212,7 +217,8 @@ void draw_char(uint8_t *buf, int x, int y, char c, Color color, int scale, int r
   }
 }
 
-void draw_text(uint8_t *buf, int x, int y, const char *str, Color color, int scale, int rotation){
+void draw_text(uint8_t *buf, int x, int y, const char *str, Color color, int scale, int rotation)
+{
   int pos_x, pos_y;
   for(int i = 0; str[i] != '\0'; i++){
     switch (rotation) {
@@ -225,14 +231,11 @@ void draw_text(uint8_t *buf, int x, int y, const char *str, Color color, int sca
   }
 }
 
-static void draw_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const AxisConfig axisConfig, Orientation orientation){
-  if(axisConfig.y_title[0] != '\0'){
-    draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title) * 8 * axisConfig.title_size/2, axisConfig.y_title, COLOR_BLACK, axisConfig.title_size, 270);
-    *x0 += axisConfig.title_size * 8;
-  }
+static void draw_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const AxisConfig axisConfig, Orientation orientation)
+{
   if(axisConfig.x_title[0] != '\0'){
     if(orientation == ORIENT_BOTTOM_AXIS){
-      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y1, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
+      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y1 - axisConfig.title_size * 8, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
       *y1 -= axisConfig.title_size * 8;
     }
     if(orientation == ORIENT_TOP_AXIS){
@@ -240,15 +243,21 @@ static void draw_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, co
       *y0 += axisConfig.title_size * 8;
     }
   }
+  if(axisConfig.y_title[0] != '\0'){
+    draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title) * 8 * axisConfig.title_size/2, axisConfig.y_title, COLOR_BLACK, axisConfig.title_size, 270);
+    *x0 += axisConfig.title_size * 8;
+  }
 }
 
-static int value_to_y(float value, float max, int y0, int y1, Orientation orientation){
+static int value_to_y(float value, float max, int y0, int y1, Orientation orientation)
+{
   if(orientation == ORIENT_BOTTOM_AXIS)
     return y1 - value * (y1 - y0) / max;
   return y0 + value * (y1 - y0) / max;
 }
 
-static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const AxisConfig axisConfig, char **x_data, int n, float y_max, Orientation orientation){
+static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const AxisConfig axisConfig, char **x_data, int n, float y_max, Orientation orientation)
+{
   int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
   int y;
   *x0 += axisConfig.thickness * 14;
@@ -278,28 +287,30 @@ static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *
   }
 }
 
-static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, Orientation orientation){
+static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, Orientation orientation)
+{
+  if(axisConfig.x_title[0] != '\0'){
+    if(orientation == ORIENT_BOTTOM_AXIS){
+      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y1 - axisConfig.title_size * 8, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
+      *y1 -= axisConfig.title_size * 8 + 2 * axisConfig.thickness;
+    }
+    if(orientation == ORIENT_TOP_AXIS){
+      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
+      *y0 += axisConfig.title_size * 8 + 2 * axisConfig.thickness;
+    }
+  }
   if(axisConfig.y_title_left[0] != '\0'){
     draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title_left) * 8 * axisConfig.title_size/2, axisConfig.y_title_left, COLOR_BLACK, axisConfig.title_size, 270);
     *x0 += axisConfig.title_size * 8;
   }
   if(axisConfig.y_title_right[0] != '\0'){
+    *x1 -= axisConfig.title_size * 8;
     draw_text(buf, *x1, (*y1 + *y0) / 2 - strlen(axisConfig.y_title_right) * 8 * axisConfig.title_size/2, axisConfig.y_title_right, COLOR_BLACK, axisConfig.title_size, 90);
-  }
-  if(axisConfig.x_title[0] != '\0'){
-    int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
-    if(orientation == ORIENT_BOTTOM_AXIS){
-      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y1 - 2 * axisConfig.thickness, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
-      *y1 -= axisConfig.title_size * 4 + 2 * axisConfig.thickness;
-    }
-    if(orientation == ORIENT_TOP_AXIS){
-      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0 - 2 * axisConfig.thickness, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
-      *y0 += axisConfig.title_size * 4 + 2 * axisConfig.thickness;
-    }
   }
 }
 
-static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, char **x_data, int n, float y_max_left, float y_max_right, Orientation orientation){
+static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, char **x_data, int n, float y_max_left, float y_max_right, Orientation orientation)
+{
   if(axisConfig.y_steps_left > 0) *x0 += axisConfig.thickness * 14;
   if(axisConfig.y_steps_right > 0) *x1 -= axisConfig.thickness * 14;
   int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
@@ -347,7 +358,8 @@ static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0
   }
 }
 
-static void draw_legend(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, bool legend, char **labels, int n, int legend_size, Orientation orientation){
+static void draw_legend(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, bool legend, char **labels, int n, int legend_size, Orientation orientation)
+{
   if(!legend) return;
   if(orientation == ORIENT_BOTTOM_AXIS) *y0 += legend_size * 8 * 1.55;
   if(orientation == ORIENT_TOP_AXIS) *y1 -= legend_size * 8 * 1.55;
@@ -368,7 +380,8 @@ static void draw_legend(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, bool l
   }
 }
 
-static void draw_bar_labels(uint8_t *buf, int *x0, int *x1,int  *y0, int *y1, bool values_label, float *y_data, int n, float max_value, float single_space, Orientation orientation){
+static void draw_bar_labels(uint8_t *buf, int *x0, int *x1,int  *y0, int *y1, bool values_label, float *y_data, int n, float max_value, float single_space, Orientation orientation)
+{
   if(!values_label) return;
   int y;
   int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
@@ -382,7 +395,8 @@ static void draw_bar_labels(uint8_t *buf, int *x0, int *x1,int  *y0, int *y1, bo
   }
 }
 
-void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation){
+void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation)
+{
   int x0 = cfg->x0;
   int x1 = cfg->x1;
   int y0 = cfg->y0;
@@ -416,7 +430,8 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
   }
 }
 
-void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float **y_data, int data_length, int data_sets, Orientation orientation){
+void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float **y_data, int data_length, int data_sets, Orientation orientation)
+{
   int x0 = cfg->x0;
   int x1 = cfg->x1;
   int y0 = cfg->y0;
@@ -463,7 +478,8 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
   }
 }
 
-void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cfg, char **x_data, float *y_data_left, float *y_data_right, int data_length, Orientation orientation){
+void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cfg, char **x_data, float *y_data_left, float *y_data_right, int data_length, Orientation orientation)
+{
   int x0 = cfg->x0;
   int x1 = cfg->x1;
   int y0 = cfg->y0;
@@ -535,7 +551,8 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
 
 
 
-void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation){
+void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation)
+{
   int x0 = cfg->x0;
   int x1 = cfg->x1;
   int y0 = cfg->y0;
@@ -597,7 +614,8 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
     }
 }
 
-void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, float *y_data, int n){
+void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, float *y_data, int n)
+{
   int cx = cfg->cx;
   int cy = cfg->cy;
   float perc[n]; 
@@ -658,7 +676,8 @@ void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, floa
   draw_circle(buf, cx, cy, cfg->radius, cfg->thickness, cfg->color);
 }
 
-void draw_freq_chart(uint8_t *buf, const FreqChartConfig *cfg, int *data, int n){
+void draw_freq_chart(uint8_t *buf, const FreqChartConfig *cfg, int *data, int n)
+{
   int start_x = cfg->x0;
   int start_y = cfg->y0;
   int counter = 0;
