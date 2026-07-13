@@ -1,22 +1,33 @@
 # ChartLib
 
-> A small, dependency-free **C library for drawing charts on e-paper displays** — bars, lines, dual-axis, heatmaps and more, rendered on a 1 bit-per-pixel framebuffer.
+> A small, dependency-free **C library for drawing charts on e-paper displays** — bars, grouped bars, dual-axis, lines and heatmaps, rendered on a 1 bit-per-pixel framebuffer.
 
 Built and tested on a **CrowPanel ESP32 E-Paper 5.79"**, but the graphics layer is pure C with **no hardware dependencies**: it draws into a `uint8_t` framebuffer that you then hand to any display driver.
 
 ## Gallery
 
-| Bar chart | Line chart |
-|-----------|------------|
-| ![bar](docs/bar.png) | ![line](docs/line.png) |
+*Bar chart — single series with value labels*
+![bar](docs/bar.png)
 
-| Dual-axis bar chart | Frequency heatmap |
-|---------------------|-------------------|
-| ![double axis](docs/double_axis.png) | ![heatmap](docs/freq.png) |
+*Grouped bars — multiple series with a legend*
+![multi-bar](docs/multi_bar.png)
+
+*Dual-axis bar chart — two series, two independent y-axes, with a legend*
+![dual axis](docs/double_axis.png)
+
+*Line chart — with value labels*
+![line](docs/line.png)
+
+*Frequency heatmap — a grid of white / gray / black cells*
+![heatmap](docs/freq.png)
+
+All the charts above are produced by the runnable programs in [`examples/`](examples).
 
 ## Features
 
-- **Charts**: bar, multi-bar, dual-axis bar, line, frequency heatmap *(pie chart is experimental)*
+- **Charts**: bar, grouped bars, dual-axis bar, line, frequency heatmap *(pie chart is experimental)*
+- **Orientation**: put the x-axis at the **bottom** (`ORIENT_BOTTOM_AXIS`) or at the **top** (`ORIENT_TOP_AXIS`)
+- **Legends** for multi-series charts, with swatches matching the series colors
 - **Primitives**: pixels, lines (any angle, via Bresenham), rectangles, circles, filled shapes
 - **Text**: built-in 8×8 font with scaling and 0/90/180/270° rotation
 - **Three "colors" on black & white**: white, black, and **gray simulated with dithering** — so you can tell series apart without real color
@@ -54,12 +65,12 @@ int main(void) {
         .y_steps = 5, .dash_line = true
     };
     BarChartConfig cfg = {
-        .x0 = 60, .x1 = 760, .y0 = 20, .y1 = 240,
+        .x0 = 8, .x1 = 784, .y0 = 12, .y1 = 262,
         .values_label = true,
         .axisConfig = axis
     };
 
-    draw_bar_chart(framebuffer, &cfg, labels, values, 4);
+    draw_bar_chart(framebuffer, &cfg, labels, values, 4, ORIENT_BOTTOM_AXIS);
 
     // now send `framebuffer` to your display, or save it for testing:
     save_pbm("output.pbm", framebuffer);
@@ -67,7 +78,27 @@ int main(void) {
 }
 ```
 
+The `x0, x1, y0, y1` you pass are the **outer bounds** of the chart: titles, ticks,
+labels and the legend are all drawn *inside* that box, so nothing spills past the
+rectangle you asked for.
+
 Colors and line styles use named constants, e.g. `COLOR_BLACK`, `COLOR_GRAY`, `LINE_DASHED`.
+
+## Examples
+
+Each chart in the gallery has a matching program in [`examples/`](examples). Build and run one from the repo root:
+
+```bash
+gcc examples/multi_bar_chart.c chart.c -o multi_bar && ./multi_bar   # -> multi_bar.pbm
+```
+
+| Example | Chart |
+|---------|-------|
+| [`bar_chart.c`](examples/bar_chart.c) | bar chart with value labels |
+| [`multi_bar_chart.c`](examples/multi_bar_chart.c) | grouped bars + legend |
+| [`double_axis_chart.c`](examples/double_axis_chart.c) | dual-axis bars + legend |
+| [`line_chart.c`](examples/line_chart.c) | line chart with value labels |
+| [`freq_chart.c`](examples/freq_chart.c) | frequency heatmap |
 
 ## On a PC (development & testing)
 
@@ -88,8 +119,9 @@ The graphics layer stays hardware-agnostic. On the device you:
 2. copy it into the display driver's buffer (handling the panel's pixel format);
 3. refresh the display.
 
-> **Note:** the `.ino` is compiled as C++. Since colors/line-styles are typed
-> enums, pass the **names** (`COLOR_BLACK`, `LINE_DASHED`), not raw integers.
+> **Note:** the `.ino` is compiled as C++. Since colors, line styles and
+> orientation are typed enums, pass the **names** (`COLOR_BLACK`, `LINE_DASHED`,
+> `ORIENT_BOTTOM_AXIS`), not raw integers.
 
 ## API overview
 
@@ -104,6 +136,7 @@ The graphics layer stays hardware-agnostic. On the device you:
 | `set_pixel`, `draw_line`, `draw_rect`, `fill_rect`, `draw_circle` | drawing primitives |
 | `draw_char`, `draw_text` | text with scaling and rotation |
 
+The four chart functions above take an `Orientation` as their last argument.
 Every public function and config struct is documented in
 [`chart.h`](chart.h) (Doxygen style).
 
