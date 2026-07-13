@@ -57,6 +57,7 @@ int get_pixel(uint8_t *buf, int x, int y)
 
 void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, Color color, LineType type) //type: 0->line, 1->dashed, 2->dotted
 {
+  if (x0 > x1) { int t = x0; x0 = x1; x1 = t; }
   int up, down;
   if(thickness % 2 == 1){
     up = down = (thickness - 1) / 2;
@@ -94,6 +95,7 @@ void draw_hline(uint8_t *buf, int x0, int x1, int y, int thickness, Color color,
 
 void draw_vline(uint8_t *buf, int x,  int y0, int y1, int thickness, Color color, LineType type) //type: 0->line, 1->dashed, 2->dotted
 {
+  if (y0 > y1) { int t = y0; y0 = y1; y1 = t; }
   int left, right;
   if(thickness % 2 == 1){
     left = right = (thickness - 1) / 2;
@@ -163,6 +165,8 @@ void draw_rect(uint8_t *buf, int x0, int x1, int y0, int y1, int thickness, Colo
 }
 
 void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, Color color){
+  if (x0 > x1) { int t = x0; x0 = x1; x1 = t; }
+  if (y0 > y1) { int t = y0; y0 = y1; y1 = t; }
   for(int r = y0; r <= y1; r++){
     draw_hline(buf, x0, x1, r, 1, color, LINE_SOLID);
   }
@@ -221,27 +225,42 @@ void draw_text(uint8_t *buf, int x, int y, const char *str, Color color, int sca
   }
 }
 
-static void draw_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const AxisConfig axisConfig){
+static void draw_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const AxisConfig axisConfig, Orientation orientation){
   if(axisConfig.y_title[0] != '\0'){
     draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title) * 8 * axisConfig.title_size/2, axisConfig.y_title, COLOR_BLACK, axisConfig.title_size, 270);
     *x0 += axisConfig.title_size * 8;
   }
   if(axisConfig.x_title[0] != '\0'){
-    draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
-    *y0 += axisConfig.title_size * 8;
+    if(orientation == ORIENT_BOTTOM_AXIS){
+      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y1, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
+      *y1 -= axisConfig.title_size * 8;
+    }
+    if(orientation == ORIENT_TOP_AXIS){
+      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
+      *y0 += axisConfig.title_size * 8;
+    }
   }
 }
 
-static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const AxisConfig axisConfig, char **x_data, int n, float y_max){
+static int value_to_y(float value, float max, int y0, int y1, Orientation orientation){
+  if(orientation == ORIENT_BOTTOM_AXIS)
+    return y1 - value * (y1 - y0) / max;
+  return y0 + value * (y1 - y0) / max;
+}
+
+static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const AxisConfig axisConfig, char **x_data, int n, float y_max, Orientation orientation){
+  int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
+  int y;
   *x0 += axisConfig.thickness * 14;
-  *y0 += axisConfig.thickness * 6;
+  if(orientation == ORIENT_BOTTOM_AXIS){ *y1 -= axisConfig.thickness * 6; y = *y1; }
+  if(orientation == ORIENT_TOP_AXIS){ *y0 += axisConfig.thickness * 6; y = *y0; }
   //horizontal ticks
   float single_space = (*x1 - *x0) / n;
   for(int i = 0; i < n; i++){
     //labels
-    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, *y0 - 6 * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
+    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, y + 6 * direction * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
     //ticks
-    draw_vline(buf, *x0 + single_space * (i + 0.5), *y0 - 2 * axisConfig.thickness, *y0, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+    draw_vline(buf, *x0 + single_space * (i + 0.5), y + 2 * direction * axisConfig.thickness, y, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
   }
 
   //vertical ticks
@@ -250,16 +269,16 @@ static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *
     //labels
     char label[16];
     snprintf(label, sizeof(label), "%d", (int)(y_max * i/axisConfig.y_steps));
-    draw_text(buf, *x0 - 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps - 4, label, COLOR_BLACK, 1, 0);
+    draw_text(buf, *x0 - 10 * axisConfig.thickness, value_to_y(y_max * i / axisConfig.y_steps, y_max, *y0, *y1, orientation) - 4, label, COLOR_BLACK, 1, 0);
     //ticks
-    draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, *y0 + (*y1 - *y0) * i / axisConfig.y_steps, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+    draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, value_to_y(y_max * i / axisConfig.y_steps, y_max, *y0, *y1, orientation), axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
     if(axisConfig.dash_line){
-      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps, axisConfig.thickness, COLOR_GRAY, LINE_DASHED);
+      draw_hline(buf, *x0, *x1, value_to_y(y_max * i / axisConfig.y_steps, y_max, *y0, *y1, orientation), axisConfig.thickness, COLOR_GRAY, LINE_DASHED);
     }
   }
 }
 
-static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig){
+static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, Orientation orientation){
   if(axisConfig.y_title_left[0] != '\0'){
     draw_text(buf, *x0, (*y1 + *y0) / 2 + strlen(axisConfig.y_title_left) * 8 * axisConfig.title_size/2, axisConfig.y_title_left, COLOR_BLACK, axisConfig.title_size, 270);
     *x0 += axisConfig.title_size * 8;
@@ -269,73 +288,100 @@ static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int 
     *x1 -= axisConfig.title_size * 8 * 1.5;  
   }
   if(axisConfig.x_title[0] != '\0'){
-    draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
-    *y0 += axisConfig.title_size * 8;
+    if(orientation == ORIENT_BOTTOM_AXIS){
+      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y1, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
+      *y1 -= axisConfig.title_size * 8;
+    }
+    if(orientation == ORIENT_TOP_AXIS){
+      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
+      *y0 += axisConfig.title_size * 8;
+    }
   }
 }
 
-static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, char **x_data, int n, float y_max_left, float y_max_right){
+static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, char **x_data, int n, float y_max_left, float y_max_right, Orientation orientation){
   *x0 += axisConfig.thickness * 14;
-  *y0 += axisConfig.thickness * 6;
-  *y1 -= axisConfig.thickness * 6;
+  int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
+  int y;
+  if(orientation == ORIENT_BOTTOM_AXIS) { *y1 -= axisConfig.thickness * 6; y = *y1; }
+  if(orientation == ORIENT_TOP_AXIS) { *y0 += axisConfig.thickness * 6; y = *y0; }
   //horizontal ticks
   float single_space = (*x1 - *x0) / n;
   for(int i = 0; i < n; i++){
     //labels
-    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, *y0 - 6 * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
+    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, y + 6 * direction * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
     //ticks
-    draw_vline(buf, *x0 + single_space * (i + 0.5), *y0 - 2 * axisConfig.thickness, *y0, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+    draw_vline(buf, *x0 + single_space * (i + 0.5), y + 2 * direction * axisConfig.thickness, y, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
   }
 
   //vertical ticks left
   single_space = (*y1 - *y0) / axisConfig.y_steps_left;
-  for(int i = 0; i < axisConfig.y_steps_left+1; i++){
+  int steps;
+  steps = axisConfig.y_steps_left > 0 ? axisConfig.y_steps_left + 1 : 0;
+  for(int i = 0; i < steps; i++){
     //labels
     char label[16];
     snprintf(label, sizeof(label), "%d", (int)(y_max_left * i/axisConfig.y_steps_left));
-    draw_text(buf, *x0 - 10 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left - 4, label, COLOR_BLACK, 1, 0);
+    draw_text(buf, *x0 - 10 * axisConfig.thickness, value_to_y(y_max_left * i / axisConfig.y_steps_left, y_max_left, *y0, *y1, orientation) - 4, label, COLOR_BLACK, 1, 0);
     //ticks
-    draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+    draw_hline(buf, *x0 - 2 * axisConfig.thickness, *x0, value_to_y(y_max_left * i / axisConfig.y_steps_left, y_max_left, *y0, *y1, orientation), axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
     if(axisConfig.dash_line_left){
-      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_left, axisConfig.thickness, COLOR_GRAY, LINE_DASHED);
+      draw_hline(buf, *x0, *x1, value_to_y(y_max_left * i / axisConfig.y_steps_left, y_max_left, *y0, *y1, orientation), axisConfig.thickness, COLOR_GRAY, LINE_DASHED);
     }
   }
 
   //vertical ticks right
+  steps = axisConfig.y_steps_right > 0 ? axisConfig.y_steps_right + 1 : 0;
   single_space = (*y1 - *y0) / axisConfig.y_steps_right;
-  for(int i = 0; i < axisConfig.y_steps_right+1; i++){
+  for(int i = 0; i < steps; i++){
     //labels
     char label[16];
     snprintf(label, sizeof(label), "%d", (int)(y_max_right * i/axisConfig.y_steps_right));
-    draw_text(buf, *x1 + 4, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right - 4, label, COLOR_BLACK, 1, 0);
+    draw_text(buf, *x1 + 4, value_to_y(y_max_right * i / axisConfig.y_steps_right, y_max_right, *y0, *y1, orientation) - 4, label, COLOR_BLACK, 1, 0);
     //ticks
-    draw_hline(buf, *x1, *x1 + 2 * axisConfig.thickness, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+    draw_hline(buf, *x1, *x1 + 2 * axisConfig.thickness, value_to_y(y_max_right * i / axisConfig.y_steps_right, y_max_right, *y0, *y1, orientation), axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
     if(axisConfig.dash_line_right){
-      draw_hline(buf, *x0, *x1, *y0 + (*y1 - *y0) * i / axisConfig.y_steps_right, axisConfig.thickness, COLOR_GRAY, LINE_DASHED);
+      draw_hline(buf, *x0, *x1, value_to_y(y_max_right * i / axisConfig.y_steps_right, y_max_right, *y0, *y1, orientation), axisConfig.thickness, COLOR_GRAY, LINE_DASHED);
     }
   }
 }
 
-static void draw_legend(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, bool legend, char **labels, int n){
+static void draw_legend(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, bool legend, char **labels, int n, Orientation orientation){
   if(!legend) return;
-  *y1 -= 20;
+  if(orientation == ORIENT_BOTTOM_AXIS) *y0 += 20;
+  if(orientation == ORIENT_TOP_AXIS) *y1 -= 20;
   float legend_space = 20 * n + 15 * (n-1);
   for(int i = 0; i < n; i++){
     legend_space += strlen(labels[i]) * 8;
   }
-  int start = (*x0 + *x1)/2 - legend_space/2;
+  int x_start = (*x0 + *x1)/2 - legend_space/2;
+  int y_start = orientation == ORIENT_BOTTOM_AXIS ? *y0 : *y1;
+  int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
+
   for(int i = 0; i < n; i++){
-    fill_rect(buf, start, start + 12, *y1, *y1 + 12, (Color)((i+1)%3));
-    draw_rect(buf, start, start + 12, *y1, *y1 + 12, 2, COLOR_BLACK, LINE_SOLID);
-    start += 20;
-    draw_text(buf, start, *y1 + 3, labels[i], COLOR_BLACK, 1, 0);
-    start += strlen(labels[i]) * 8 + 15;
+    fill_rect(buf, x_start, x_start - 12 * direction, y_start, y_start - 12 * direction, (Color)((i+1)%3));
+    draw_rect(buf, x_start, x_start - 12 * direction, y_start, y_start - 12 * direction, 2, COLOR_BLACK, LINE_SOLID);
+    x_start += 10;
+    draw_text(buf, x_start, y_start - 10 * direction, labels[i], COLOR_BLACK, 1, 0);
+    x_start += strlen(labels[i]) * 8 + 15;
   }
 }
 
+static void draw_bar_labels(uint8_t *buf, int *x0, int *x1,int  *y0, int *y1, bool values_label, float *y_data, int n, float max_value, float single_space, Orientation orientation){
+  if(!values_label) return;
+  int y;
+  int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
+  for(int i = 0; i < n; i++){
+    char label[16];
+    snprintf(label, sizeof(label), "%d", (int)(y_data[i]));
+    y = value_to_y(y_data[i], max_value, *y0, *y1, orientation);
+    draw_rect(buf, *x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 2, *x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2, y- 2 * direction, y - 12 * direction, 1, COLOR_BLACK, LINE_SOLID);
+    fill_rect(buf, *x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 1, *x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2 - 1, y - 3 * direction, y - 11 * direction, COLOR_WHITE);
+    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2, y - (orientation == ORIENT_BOTTOM_AXIS ? 10 : 4) * direction, label, COLOR_BLACK, 1, 0);
+  }
+}
 
-
-void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n){
+void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation){
   int x0 = cfg->x0;
   int x1 = cfg->x1;
   int y0 = cfg->y0;
@@ -346,33 +392,30 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
     if(y_data[i] > max_value) max_value = y_data[i];
   }
 
-  if(cfg->values_label) y1 -= 15;
-
-  draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
-  draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value);
-
-  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
-  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
-
-  float single_space = (x1 - x0) / n;
-
-  for(int i = 0; i < n; i++){
-    draw_vline(buf, x0 + single_space * (i + 0.5), y0, y0 + y_data[i] * (y1 - y0) / max_value, (single_space / 2) * 0.6, COLOR_BLACK, LINE_SOLID);
+  if(cfg->values_label){
+    if(orientation == ORIENT_BOTTOM_AXIS) y0 += 15;
+    if(orientation == ORIENT_TOP_AXIS) y1 -= 15;
   }
 
-  if(cfg->values_label)
-    for(int i = 0; i < n; i++){
-      char label[16];
-      snprintf(label, sizeof(label), "%d", (int)(y_data[i]));
+  draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, orientation);
+  draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value, orientation);
+  float single_space = (x1 - x0) / n;
+  draw_bar_labels(buf, &x0, &x1, &y0, &y1, cfg->values_label, y_data, n, max_value, single_space, orientation);
 
-      draw_rect(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 2, x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2, y0 + y_data[i] * (y1 - y0) / max_value - 4 + 6, y0 + y_data[i] * (y1 - y0) / max_value + 4 + 8, 1, COLOR_BLACK, LINE_SOLID);
-      fill_rect(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2 - 1, x0 + single_space * (i + 0.5) + strlen(label) * 8 / 2 - 1, y0 + y_data[i] * (y1 - y0) / max_value + 3, y0 + y_data[i] * (y1 - y0) / max_value + 11, COLOR_WHITE);
-      draw_text(buf, x0 + single_space * (i + 0.5) - strlen(label) * 8 / 2,  y0 + y_data[i] * (y1 - y0) / max_value + 4, label, COLOR_BLACK, 1, 0);
-    }
+  draw_hline(buf, x0, x1, value_to_y(0, max_value, y0, y1, orientation), cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
 
+  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  
+  int y_start;
+  int y_end;
+  for(int i = 0; i < n; i++){
+    y_start = value_to_y(0, max_value, y0, y1, orientation);
+    y_end   = value_to_y(y_data[i], max_value, y0, y1, orientation);
+    draw_vline(buf, x0 + single_space * (i + 0.5), y_start, y_end, (single_space / 2) * 0.6, COLOR_BLACK, LINE_SOLID);
+  }
 }
 
-void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float **y_data, int data_length, int data_sets){
+void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float **y_data, int data_length, int data_sets, Orientation orientation){
   int x0 = cfg->x0;
   int x1 = cfg->x1;
   int y0 = cfg->y0;
@@ -380,17 +423,17 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
 
   float max_value = y_data[0][0];
   for(int i = 0; i < data_length; i++){
-    for(int j = 0; j < data_length; j++)
+    for(int j = 0; j < data_sets; j++)
       if(y_data[i][j] > max_value) max_value = y_data[i][j];
   }
 
   if(cfg->values_label) y1 -= 15;
-  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2);
-  draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
-  draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, data_length, max_value);
+  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2, orientation);
+  draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, orientation);
+  draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, data_length, max_value, orientation);
 
   draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
-  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  draw_hline(buf, x0, x1, value_to_y(0, max_value, y0, y1, orientation), cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
 
   float single_space = (x1 - x0) / data_length;
   float bars_space = single_space * 0.6;
@@ -401,16 +444,16 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
       fill_rect(buf,
                 x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) - (small_space * 0.4),
                 x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) + (small_space * 0.4),
-                y0,
-                y0 + y_data[i][j] * (y1 - y0) / max_value,
+                value_to_y(0, max_value, y0, y1, orientation),
+                value_to_y(y_data[i][j], max_value, y0, y1, orientation),
                 (Color)(j % 3)
                 );
 
       draw_rect(buf,
                 x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) - (small_space * 0.4),
                 x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) + (small_space * 0.4),
-                y0,
-                y0 + y_data[i][j] * (y1 - y0) / max_value,
+                value_to_y(0, max_value, y0, y1, orientation),
+                value_to_y(y_data[i][j], max_value, y0, y1, orientation),
                 small_space * 0.15,
                 COLOR_BLACK,
                 LINE_SOLID
@@ -419,7 +462,7 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
   }
 }
 
-void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cfg, char **x_data, float *y_data_left, float *y_data_right, int data_length){
+void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cfg, char **x_data, float *y_data_left, float *y_data_right, int data_length, Orientation orientation){
   int x0 = cfg->x0;
   int x1 = cfg->x1;
   int y0 = cfg->y0;
@@ -434,32 +477,36 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
 
   if(cfg->values_label) y1 -= 15;
 
-  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2);
-  draw_double_axis_title(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig);
-  draw_double_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig, x_data, data_length, max_value_left, max_value_right);
+  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2, orientation);
+  draw_double_axis_title(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig, orientation);
+  draw_double_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig, x_data, data_length, max_value_left, max_value_right, orientation);
 
   draw_vline(buf, x0, y0, y1, cfg->doubleAxisConfig.thickness, COLOR_BLACK, LINE_SOLID);
   draw_vline(buf, x1, y0, y1, cfg->doubleAxisConfig.thickness, COLOR_BLACK, LINE_SOLID);
-  draw_hline(buf, x0, x1, y0, cfg->doubleAxisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  draw_hline(buf, x0, x1, value_to_y(0, max_value_left > max_value_right ? max_value_left : max_value_right, y0, y1, orientation), cfg->doubleAxisConfig.thickness, COLOR_BLACK, LINE_SOLID);
 
   float single_space = (x1 - x0) / data_length;
   float bars_space = single_space * 0.6;
   float small_space = bars_space / 2;
 
   for(int i = 0; i < data_length; i++){
+    int y_start = value_to_y(0, max_value_left, y0, y1, orientation);
+    int y_end_left = value_to_y(y_data_left[i], max_value_left, y0, y1, orientation);
+    int y_end_right = value_to_y(y_data_right[i], max_value_right, y0, y1, orientation);
+
     //left
     fill_rect(buf,
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) - (small_space * 0.4),
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) + (small_space * 0.4),
-              y0,
-              y0 + y_data_left[i] * (y1 - y0) / max_value_left,
+              y_start,
+              y_end_left,
               COLOR_BLACK
               );
     draw_rect(buf,
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) - (small_space * 0.4),
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (0 + 0.5) + (small_space * 0.4),
-              y0,
-              y0 + y_data_left[i] * (y1 - y0) / max_value_left,
+              y_start,
+              y_end_left,
               small_space * 0.15,
               COLOR_BLACK,
               LINE_SOLID
@@ -468,15 +515,15 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
     fill_rect(buf,
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) - (small_space * 0.4),
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) + (small_space * 0.4),
-              y0,
-              y0 + y_data_right[i] * (y1 - y0) / max_value_right,
+              y_start,
+              y_end_right,
               COLOR_GRAY 
               );
     draw_rect(buf,
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) - (small_space * 0.4),
               x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (1 + 0.5) + (small_space * 0.4),
-              y0,
-              y0 + y_data_right[i] * (y1 - y0) / max_value_right,
+              y_start,
+              y_end_right,
               small_space * 0.15,
               COLOR_BLACK,
               LINE_SOLID
@@ -487,7 +534,7 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
 
 
 
-void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n){
+void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation){
   int x0 = cfg->x0;
   int x1 = cfg->x1;
   int y0 = cfg->y0;
@@ -500,19 +547,19 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
 
   if(cfg->values_label) y1 -= 10;
 
-  draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig);
-  draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value);
+  draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, orientation);
+  draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value, orientation);
 
   draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
-  draw_hline(buf, x0, x1, y0, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  draw_hline(buf, x0, x1, value_to_y(0, max_value, y0, y1, orientation), cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
 
   float single_space = (x1 - x0) / n;
   for(int i = 0; i < n-1; i++){
     draw_line(buf, 
               x0 + single_space * (i + 0.5), 
-              y0 + y_data[i] * (y1 - y0) / max_value,
+              value_to_y(y_data[i], max_value, y0, y1, orientation),
               x0 + single_space * (i+1 + 0.5),
-              y0 + y_data[i+1] * (y1 - y0) / max_value,
+              value_to_y(y_data[i+1], max_value, y0, y1, orientation),
               cfg->line_thickness,
               cfg->line_color,
               cfg->line_type);
@@ -527,7 +574,7 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
       if(i-1 >= 0) prec = y_data[i-1];
       if(i+1 < n) suc = y_data[i+1];
       pos_x = x0 + single_space * (i + 0.5);
-      pos_y = y0 + y_data[i] * (y1 - y0) / max_value;
+      pos_y = value_to_y(y_data[i], max_value, y0, y1, orientation);
 
       if(prec < cur && suc < cur){
         pos_y += 10; 

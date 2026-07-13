@@ -32,31 +32,19 @@ int main(void)
     .y_title_right = "destra", 
     .x_title = "time", .y_steps_left=8, .dash_line_left = true};
   cfg.doubleAxisConfig = axisCfg;
-  draw_double_axis_bar_chart(framebuffer, &cfg, datas, data_sx, data_dx, n);
+  draw_double_axis_bar_chart(framebuffer, &cfg, datas, data_sx, data_dx, n, ORIENT_BOTTOM_AXIS);
 
-  PieChartConfig pie_cfg = {.cx = 100, .cy = 100, .thickness = 2, .color = 1, .radius = 60, .values_label = true, .names_label = true};
 
-  
-  FreqChartConfig fre_cfg = {.x0 = 100, .y0=60, .border_width=3,
-  .rows_num = 4,
-  .columns_num = 12,
-  .square_size = 11,
-  .square_distance = 7
-};
-
-  int datab[] = {1,1,1,0,0,0,1,1,1,2,2,2,2,
-  1,1,1,0,0,0,1,1,1,2,2,2,2,
-1,1,1,0,0,0,1,1,1,2,2,2,2,
-1,1,1,0,0,0,1,1,1,2,2,2,2};
-
-  int x = 100;
-
-  char *month[] = {"gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"};
-  x = x + (fre_cfg.square_size/2) - (8/2);
-  for(int i=0; i<12;i++){
-    x += fre_cfg.square_distance + fre_cfg.square_size;
-  }
-
+  /* multi-bar chart (2 serie) con asse x IN BASSO, a destra del grafico esistente */
+  char *mb_labels[] = {"Jan", "Feb", "Mar", "Apr", "May"};
+  float *mb_data[]  = {(float[]){12,20,10}, (float[]){30,15,13}, (float[]){7,25,13},
+                       (float[]){45,30,13}, (float[]){20,40,13}};
+  AxisConfig bax = {.thickness = 2, .title_size = 2,
+                    .x_title = "month", .y_title = "km",
+                    .y_steps = 5, .dash_line = true};
+  BarChartConfig bcfg = {.x0 = 420, .x1 = 760, .y0 = 20, .y1 = 240,
+                         .values_label = false, .axisConfig = bax};
+  draw_multi_bar_chart(framebuffer, &bcfg, mb_labels, mb_data, 5, 3, ORIENT_BOTTOM_AXIS);
 
   save_pbm("output.pbm", framebuffer);
   return 0;

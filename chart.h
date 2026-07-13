@@ -32,6 +32,11 @@ typedef enum {
   LINE_DOTTED = 2             /**< dotted line*/
 } LineType;
 
+typedef enum {
+  ORIENT_BOTTOM_AXIS = 0,     /**< x-axis at the bottom*/
+  ORIENT_TOP_AXIS = 1         /**< x-axis at the top*/
+} Orientation;
+
 typedef struct {
   bool legend;                /**< presence of the legend*/
   char **labels;              /**< labels for the legend*/
@@ -60,14 +65,14 @@ typedef struct {
 
 typedef struct {
   int x0, x1, y0, y1;         /**< chart area: top-left (x0,y0) and bottom-right (x1,y1) corners in pixel*/
-  bool values_label;          /**< show the value above each bar*/
+  bool values_label;          /**< show the values near each bar*/
   AxisConfig axisConfig;      /**< axis configuration (see AxisConfig)*/
   LegendConfig legendConfig;  /**< legend configuration (see LegendConfig)*/
 } BarChartConfig;
 
 typedef struct {
   int x0, x1, y0, y1;                 /**< chart area: top-left (x0,y0) and bottom-right (x1,y1) corners in pixel*/
-  bool values_label;                  /**< show the value above each bar*/
+  bool values_label;                  /**< show the values near each bar*/
   DoubleAxisConfig doubleAxisConfig;  /**< double-axis configuration (see DoubleAxisConfig)*/
   LegendConfig legendConfig;          /**< legend configuration (see LegendConfig)*/
 } DoubleAxisBarChartConfig;
@@ -234,7 +239,7 @@ void draw_text(uint8_t *buf, int x, int y, const char *str, Color color, int sca
  * @param y_data        actual data of the chart
  * @param n             length of the x_data and y_data
  */
-void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n);
+void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation);
 
 /**
  * @brief Draw bar chart with multiple bars
@@ -246,7 +251,7 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
  * @param data_length   length of the x_data and y_data
  * @param data_sets     number of the datasets. number of column per label
  */
-void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float **y_data, int data_length, int data_sets);
+void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float **y_data, int data_length, int data_sets, Orientation orientation);
 
 /**
  * @brief Draw bar chart with two y-axis and two bars
@@ -258,7 +263,7 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
  * @param y_data_right  actual data of the chart for the right y-axis
  * @param data_length   length of the x_data, y_data_left, and y_data_right
  */
-void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cfg, char **x_data, float *y_data_left, float *ydata_right, int data_length);
+void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cfg, char **x_data, float *y_data_left, float *ydata_right, int data_length, Orientation orientation);
 
 /**
  * @brief Draw line chart
@@ -269,7 +274,7 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
  * @param y_data        actual data of the chart
  * @param n             length of the x_data and y_data
  */
-void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n);
+void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation);
 
 /**
  * @brief Draw pie chart
