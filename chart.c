@@ -462,7 +462,7 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
                 x0 + single_space * (i + 0.5) - (bars_space * 0.5) + small_space * (j + 0.5) + (small_space * 0.4),
                 value_to_y(0, max_value, y0, y1, orientation),
                 value_to_y(y_data[i][j], max_value, y0, y1, orientation),
-                (Color)(j % 3)
+                (Color)((j + 1) % 3)
                 );
 
       draw_rect(buf,
