@@ -24,27 +24,22 @@ int main(void)
   char *datas[] = {"de", "ew", "re", "aa", "rd"};
   int n = 5;
 
-  LegendConfig lg = {.legend = true, .labels = (char*[]){"prova", "siuuuum"}};
+  LegendConfig lg = {.legend = true, .labels = (char*[]){"prova", "siuuuum"}, .legend_size = 1};
   DoubleAxisBarChartConfig cfg = { .x0 = 10, .x1 = 300, .y0 = 5, .y1 = 200, .values_label = true};
   cfg.legendConfig = lg;
   DoubleAxisConfig axisCfg = {.thickness = 2, .title_size = 2, 
     .y_title_left = "temp", 
     .y_title_right = "destra", 
-    .x_title = "time", .y_steps_left=8, .dash_line_left = true};
+    .x_title = "time", .y_steps_left=8, .y_steps_right = 2, .dash_line_left = true};
   cfg.doubleAxisConfig = axisCfg;
   draw_double_axis_bar_chart(framebuffer, &cfg, datas, data_sx, data_dx, n, ORIENT_BOTTOM_AXIS);
 
 
-  /* multi-bar chart (2 serie) con asse x IN BASSO, a destra del grafico esistente */
-  char *mb_labels[] = {"Jan", "Feb", "Mar", "Apr", "May"};
-  float *mb_data[]  = {(float[]){12,20,10}, (float[]){30,15,13}, (float[]){7,25,13},
-                       (float[]){45,30,13}, (float[]){20,40,13}};
-  AxisConfig bax = {.thickness = 2, .title_size = 2,
-                    .x_title = "month", .y_title = "km",
-                    .y_steps = 5, .dash_line = true};
-  BarChartConfig bcfg = {.x0 = 420, .x1 = 760, .y0 = 20, .y1 = 240,
-                         .values_label = false, .axisConfig = bax};
-  draw_multi_bar_chart(framebuffer, &bcfg, mb_labels, mb_data, 5, 3, ORIENT_BOTTOM_AXIS);
+  DoubleAxisBarChartConfig cfg_2 = { .x0 = 350, .x1 = 650, .y0 = 5, .y1 = 200, .values_label = true};
+  cfg_2.legendConfig = lg;
+  cfg_2.doubleAxisConfig = axisCfg;
+    draw_double_axis_bar_chart(framebuffer, &cfg_2, datas, data_sx, data_dx, n, ORIENT_TOP_AXIS);
+
 
   save_pbm("output.pbm", framebuffer);
   return 0;

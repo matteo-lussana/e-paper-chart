@@ -258,7 +258,7 @@ static void draw_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *
   float single_space = (*x1 - *x0) / n;
   for(int i = 0; i < n; i++){
     //labels
-    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, y + 6 * direction * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
+    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, (y + 4 * direction * axisConfig.thickness) - 2 * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
     //ticks
     draw_vline(buf, *x0 + single_space * (i + 0.5), y + 2 * direction * axisConfig.thickness, y, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
   }
@@ -285,22 +285,23 @@ static void draw_double_axis_title(uint8_t *buf, int *x0, int *x1, int *y0, int 
   }
   if(axisConfig.y_title_right[0] != '\0'){
     draw_text(buf, *x1, (*y1 + *y0) / 2 - strlen(axisConfig.y_title_right) * 8 * axisConfig.title_size/2, axisConfig.y_title_right, COLOR_BLACK, axisConfig.title_size, 90);
-    *x1 -= axisConfig.title_size * 8 * 1.5;  
   }
   if(axisConfig.x_title[0] != '\0'){
+    int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
     if(orientation == ORIENT_BOTTOM_AXIS){
-      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y1, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
-      *y1 -= axisConfig.title_size * 8;
+      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y1 - 2 * axisConfig.thickness, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
+      *y1 -= axisConfig.title_size * 4 + 2 * axisConfig.thickness;
     }
     if(orientation == ORIENT_TOP_AXIS){
-      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
-      *y0 += axisConfig.title_size * 8;
+      draw_text(buf, (*x1 + *x0) / 2 - strlen(axisConfig.x_title) * 8 * axisConfig.title_size/2, *y0 - 2 * axisConfig.thickness, axisConfig.x_title, COLOR_BLACK, axisConfig.title_size, 0);
+      *y0 += axisConfig.title_size * 4 + 2 * axisConfig.thickness;
     }
   }
 }
 
 static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, const DoubleAxisConfig axisConfig, char **x_data, int n, float y_max_left, float y_max_right, Orientation orientation){
-  *x0 += axisConfig.thickness * 14;
+  if(axisConfig.y_steps_left > 0) *x0 += axisConfig.thickness * 14;
+  if(axisConfig.y_steps_right > 0) *x1 -= axisConfig.thickness * 14;
   int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
   int y;
   if(orientation == ORIENT_BOTTOM_AXIS) { *y1 -= axisConfig.thickness * 6; y = *y1; }
@@ -309,7 +310,7 @@ static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0
   float single_space = (*x1 - *x0) / n;
   for(int i = 0; i < n; i++){
     //labels
-    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, y + 6 * direction * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
+    draw_text(buf, *x0 + single_space * (i + 0.5) - strlen(x_data[i]) * 8 / 2, (y + 4 * direction * axisConfig.thickness) - 2 * axisConfig.thickness, x_data[i], COLOR_BLACK, 1, 0);
     //ticks
     draw_vline(buf, *x0 + single_space * (i + 0.5), y + 2 * direction * axisConfig.thickness, y, axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
   }
@@ -346,24 +347,24 @@ static void draw_double_ticks_and_labels(uint8_t *buf, int *x0, int *x1, int *y0
   }
 }
 
-static void draw_legend(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, bool legend, char **labels, int n, Orientation orientation){
+static void draw_legend(uint8_t *buf, int *x0, int *x1, int *y0, int *y1, bool legend, char **labels, int n, int legend_size, Orientation orientation){
   if(!legend) return;
-  if(orientation == ORIENT_BOTTOM_AXIS) *y0 += 20;
-  if(orientation == ORIENT_TOP_AXIS) *y1 -= 20;
-  float legend_space = 20 * n + 15 * (n-1);
+  if(orientation == ORIENT_BOTTOM_AXIS) *y0 += legend_size * 8 * 1.55;
+  if(orientation == ORIENT_TOP_AXIS) *y1 -= legend_size * 8 * 1.55;
+  float legend_space = (legend_size * 8 * 1.25) * n + legend_size * 8 * 1.2 * (n-1);
   for(int i = 0; i < n; i++){
     legend_space += strlen(labels[i]) * 8;
   }
   int x_start = (*x0 + *x1)/2 - legend_space/2;
-  int y_start = orientation == ORIENT_BOTTOM_AXIS ? *y0 : *y1;
+  int y_start = orientation == ORIENT_BOTTOM_AXIS ? *y0 - legend_size * 4 : *y1 + legend_size * 4;
   int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
-
+  int padding = 8 * legend_size * direction;
   for(int i = 0; i < n; i++){
-    fill_rect(buf, x_start, x_start - 12 * direction, y_start, y_start - 12 * direction, (Color)((i+1)%3));
-    draw_rect(buf, x_start, x_start - 12 * direction, y_start, y_start - 12 * direction, 2, COLOR_BLACK, LINE_SOLID);
-    x_start += 10;
-    draw_text(buf, x_start, y_start - 10 * direction, labels[i], COLOR_BLACK, 1, 0);
-    x_start += strlen(labels[i]) * 8 + 15;
+    fill_rect(buf, x_start, x_start + 8 * legend_size, y_start, y_start - padding, (Color)((i+1)%3));
+    draw_rect(buf, x_start, x_start + 8 * legend_size, y_start, y_start - padding, legend_size * 2, COLOR_BLACK, LINE_SOLID);
+    x_start += 8 * legend_size * 1.5;
+    draw_text(buf, x_start, y_start < y_start - padding ? y_start : y_start - padding, labels[i], COLOR_BLACK, 1, 0);
+    x_start += strlen(labels[i]) * 8 + legend_size * 8 * 1.2;
   }
 }
 
@@ -428,7 +429,7 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
   }
 
   if(cfg->values_label) y1 -= 15;
-  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2, orientation);
+  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, data_sets, cfg->legendConfig.legend_size, orientation);
   draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, orientation);
   draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, data_length, max_value, orientation);
 
@@ -477,7 +478,7 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
 
   if(cfg->values_label) y1 -= 15;
 
-  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2, orientation);
+  draw_legend(buf, &x0, &x1, &y0, &y1, cfg->legendConfig.legend, cfg->legendConfig.labels, 2, cfg->legendConfig.legend_size, orientation);
   draw_double_axis_title(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig, orientation);
   draw_double_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->doubleAxisConfig, x_data, data_length, max_value_left, max_value_right, orientation);
 

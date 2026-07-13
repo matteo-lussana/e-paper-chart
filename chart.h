@@ -40,6 +40,7 @@ typedef enum {
 typedef struct {
   bool legend;                /**< presence of the legend*/
   char **labels;              /**< labels for the legend*/
+  int legend_size;            /**< size of the legend text and squares (> 0)*/
 } LegendConfig;
 
 typedef struct {
