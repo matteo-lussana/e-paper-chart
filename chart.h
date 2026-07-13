@@ -239,6 +239,7 @@ void draw_text(uint8_t *buf, int x, int y, const char *str, Color color, int sca
  * @param x_data        labels for the x-axis
  * @param y_data        actual data of the chart
  * @param n             length of the x_data and y_data
+ * @param orientation   enum that specity the position of the x-axis (see Orientation)
  */
 void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation);
 
@@ -251,6 +252,7 @@ void draw_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, floa
  * @param y_data        actual data of the chart
  * @param data_length   length of the x_data and y_data
  * @param data_sets     number of the datasets. number of column per label
+ * @param orientation   enum that specity the position of the x-axis (see Orientation)
  */
 void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data, float **y_data, int data_length, int data_sets, Orientation orientation);
 
@@ -263,6 +265,7 @@ void draw_multi_bar_chart(uint8_t *buf, const BarChartConfig *cfg, char **x_data
  * @param y_data_left   actual data of the chart for the left y-axis
  * @param y_data_right  actual data of the chart for the right y-axis
  * @param data_length   length of the x_data, y_data_left, and y_data_right
+ * @param orientation   enum that specity the position of the x-axis (see Orientation)
  */
 void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cfg, char **x_data, float *y_data_left, float *ydata_right, int data_length, Orientation orientation);
 
@@ -274,6 +277,7 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
  * @param x_data        labels for the x-axis
  * @param y_data        actual data of the chart
  * @param n             length of the x_data and y_data
+ * @param orientation   enum that specity the position of the x-axis (see Orientation)
  */
 void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation);
 
