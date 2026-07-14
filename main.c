@@ -50,7 +50,17 @@ int main(void)
 .names_label=true
   };
 
-  draw_pie_chart(framebuffer, &pie_cfg, datas, data_dx, 5);
+  draw_pie_chart(framebuffer, &pie_cfg, datas, data_dx, 4);
+
+
+  /* --- torta di prova (quella che vede Claude): x=600, centrata in verticale --- */
+  char *pie_labels[] = {"A", "B", "C", "D"};
+  float pie_vals[]   = {40, 25, 20, 15};
+  PieChartConfig pie_cfg2 = {
+    .cx = 600, .cy = 136, .radius = 80, .thickness = 2,
+    .values_label = true, .names_label = true
+  };
+  draw_pie_chart(framebuffer, &pie_cfg2, pie_labels, pie_vals, 4);
 
 
   save_pbm("output.pbm", framebuffer);
