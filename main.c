@@ -32,13 +32,25 @@ int main(void)
     .y_title_right = "destra", 
     .x_title = "time", .y_steps_left=8, .y_steps_right = 2, .dash_line_left = true};
   cfg.doubleAxisConfig = axisCfg;
-  draw_double_axis_bar_chart(framebuffer, &cfg, datas, data_sx, data_dx, n, ORIENT_BOTTOM_AXIS);
+ // draw_double_axis_bar_chart(framebuffer, &cfg, datas, data_sx, data_dx, n, ORIENT_BOTTOM_AXIS);
 
 
   DoubleAxisBarChartConfig cfg_2 = { .x0 = 350, .x1 = 650, .y0 = 5, .y1 = 200, .values_label = true};
   cfg_2.legendConfig = lg;
   cfg_2.doubleAxisConfig = axisCfg;
-    draw_double_axis_bar_chart(framebuffer, &cfg_2, datas, data_sx, data_dx, n, ORIENT_TOP_AXIS);
+  //draw_double_axis_bar_chart(framebuffer, &cfg_2, datas, data_sx, data_dx, n, ORIENT_TOP_AXIS);
+
+
+  PieChartConfig pie_cfg = {
+    .cx = 200,
+    .thickness = 1,
+    .cy = 200,
+    .radius = 40,
+    .values_label = true,
+.names_label=true
+  };
+
+  draw_pie_chart(framebuffer, &pie_cfg, datas, data_dx, 5);
 
 
   save_pbm("output.pbm", framebuffer);

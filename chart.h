@@ -91,7 +91,6 @@ typedef struct {
   int cx, cy;                 /**< center coordinates of the pie in pixel*/
   int radius;                 /**< radius of the pie*/
   int thickness;              /**< thickness of the outline and slice dividers*/
-  Color color;                /**< color of the outline and dividers (COLOR_WHITE = 0, COLOR_BLACK = 1, COLOR_GRAY = 2)*/
   bool values_label;          /**< show the percentage on each slice*/
   bool names_label;           /**< show the label name on each slice*/
 } PieChartConfig;

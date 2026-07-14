@@ -650,7 +650,7 @@ void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, floa
     curr_angle -= perc[i];
     float px = cfg->radius * cosf(curr_angle);
     float py = cfg->radius * sinf(curr_angle);
-    draw_line(buf, cx, cy, cx + px, cy + py, cfg->thickness, cfg->color, LINE_SOLID);
+    draw_line(buf, cx, cy, cx + px, cy + py, cfg->thickness, COLOR_BLACK, LINE_SOLID);
   }
 
   //draw indicators
@@ -664,16 +664,28 @@ void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, floa
       float iy = cy + (cfg->radius / 3 * sinf(perc[i]/2 - curr_angle));
       float ox = cx + (cfg->radius * 1.5 * cosf(perc[i]/2 - curr_angle));
       float oy = cy + (cfg->radius * 1.5 * sinf(perc[i]/2 - curr_angle));
-      draw_line(buf, ix, iy, ox, oy, cfg->thickness, cfg->color, LINE_SOLID);
+      draw_line(buf, ix, iy, ox, oy, cfg->thickness, COLOR_BLACK, LINE_SOLID);
+      float final_x = ox > ix ? ox + cfg->radius / 3 : ox - cfg->radius / 3;
+      draw_hline(buf, ox, final_x, oy, cfg->thickness, COLOR_BLACK, LINE_SOLID);
+      float start_text_x;
+      float start_text_y;
+      ox = final_x;
 
-      if (cfg->values_label) len += snprintf(str + len, sizeof(str) - len, "%.1f%% ", perc[i]/(2*3.14)*100);
-
-      if (cfg->names_label) len += snprintf(str + len, sizeof(str) - len, "%s", x_data[i]);
-      draw_text(buf, ox, oy, str, cfg->color, 1, 0);
+      if (cfg->names_label){
+        start_text_x = ox > ix ? ox : ox - strlen(x_data[i]) * 8;
+        start_text_y = oy - 8;
+        draw_text(buf, start_text_x, start_text_y, x_data[i], COLOR_BLACK, 1, 0);
+      }
+      if (cfg->values_label){
+        snprintf(str, sizeof(str), "%.1f%%", perc[i]/(2*3.14)*100);
+        start_text_x = ox > ix ? ox : ox - strlen(str) * 8;
+        start_text_y = oy - 8;
+        if (cfg->names_label) start_text_y += 8;
+        draw_text(buf, start_text_x, start_text_y, str, COLOR_BLACK, 1, 0);
+      }
     }
   }
-
-  draw_circle(buf, cx, cy, cfg->radius, cfg->thickness, cfg->color);
+  draw_circle(buf, cx, cy, cfg->radius, cfg->thickness, COLOR_BLACK);
 }
 
 void draw_freq_chart(uint8_t *buf, const FreqChartConfig *cfg, int *data, int n)
