@@ -88,6 +88,13 @@ typedef struct {
 } LineChartConfig;
 
 typedef struct {
+  int x0, x1, y0, y1;         /**< chart area: top-left (x0,y0) and bottom-right (x1,y1) corners in pixel*/
+  int dots_size;               /**< size of the dots for each value*/
+  Color dot_color;            /**< color of the line (COLOR_WHITE = 0, COLOR_BLACK = 1, COLOR_GRAY = 2)*/
+  AxisConfig axisConfig;      /**< axis configuration (see AxisConfig)*/
+} ScatterChartConfig;
+
+typedef struct {
   int cx, cy;                 /**< center coordinates of the pie in pixel*/
   int radius;                 /**< radius of the pie*/
   int thickness;              /**< thickness of the outline and slice dividers*/
@@ -203,7 +210,15 @@ void fill_rect(uint8_t *buf, int x0, int x1, int y0, int y1, Color color);
  */
 void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, Color color);
 
-
+/**
+ * @brief Fill a circle
+ *
+ * @param buf           framebuffer
+ * @param cx, cy        center coordinates
+ * @param radius        circle radius
+ * @param color         circle color (COLOR_WHITE = 0, COLOR_BLACK = 1, COLOR_GRAY = 2)
+ */
+void fill_circle(uint8_t *buf, int cx, int cy, int radius, Color color);
 /********************** TEXT ***************************/
 /**
  * @brief Write single character
@@ -272,13 +287,25 @@ void draw_double_axis_bar_chart(uint8_t *buf, const DoubleAxisBarChartConfig *cf
  * @brief Draw line chart
  *
  * @param buf           framebuffer
- * @param cfg           config for the bar char (see LineChartConfig)
+ * @param cfg           config for the line char (see LineChartConfig)
  * @param x_data        labels for the x-axis
  * @param y_data        actual data of the chart
  * @param n             length of the x_data and y_data
  * @param orientation   enum that specity the position of the x-axis (see Orientation)
  */
 void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation);
+
+/**
+ * @brief Draw scatter chart
+ *
+ * @param buf           framebuffer
+ * @param cfg           config for the scatter char (see LineChartConfig)
+ * @param x_data        labels for the x-axis
+ * @param y_data        actual data of the chart
+ * @param n             length of the x_data and y_data
+ * @param orientation   enum that specity the position of the x-axis (see Orientation)
+ */
+void draw_scatter_chart(uint8_t *buf, const ScatterChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation);
 
 /**
  * @brief Draw pie chart

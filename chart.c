@@ -194,10 +194,30 @@ void draw_circle(uint8_t *buf, int cx, int cy, int radius, int thickness, Color 
 
     x++;
     if (d < 0){
-      d += 2*x +1;
+      d += 2*x + 1;
     } else {
       y--;
-      d += 2*(x -y) + 1;
+      d += 2*(x - y) + 1;
+    }
+  }
+}
+
+void fill_circle(uint8_t *buf, int cx, int cy, int radius, Color color){
+  int x = 0;
+  int y = radius;
+  int d = 1 - radius;
+  while (x <= y){
+    draw_hline(buf, cx - x, cx + x, cy + y, 1, color, LINE_SOLID);
+    draw_hline(buf, cx - x, cx + x, cy - y, 1, color, LINE_SOLID);
+    draw_hline(buf, cx - y, cx + y, cy + x, 1, color, LINE_SOLID);
+    draw_hline(buf, cx - y, cx + y, cy - x, 1, color, LINE_SOLID);
+
+    x++;
+    if (d < 0){
+      d += 2*x + 1;
+    } else {
+      y--;
+      d += 2*(x - y) + 1;
     }
   }
 }
@@ -618,6 +638,36 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
       fill_rect(buf, pos_x - strlen(label) * 8 / 2 - 1, pos_x + strlen(label) * 8 / 2 - 1, pos_y - 1, pos_y + 8 -1, COLOR_WHITE);
       draw_text(buf, pos_x - strlen(label) * 8 / 2, pos_y, label, cfg->line_color, 1, 0);
     }
+}
+
+void draw_scatter_chart(uint8_t *buf, const ScatterChartConfig *cfg, char **x_data, float *y_data, int n, Orientation orientation)
+{
+  int x0 = cfg->x0;
+  int x1 = cfg->x1;
+  int y0 = cfg->y0;
+  int y1 = cfg->y1;
+
+  float max_value = y_data[0];
+  for(int i = 0; i < n; i++){
+    if(y_data[i] > max_value) max_value = y_data[i];
+  }
+
+
+  draw_axis_title(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, orientation);
+  draw_ticks_and_labels(buf, &x0, &x1, &y0, &y1, cfg->axisConfig, x_data, n, max_value, orientation);
+
+  draw_vline(buf, x0, y0, y1, cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+  draw_hline(buf, x0, x1, value_to_y(0, max_value, y0, y1, orientation), cfg->axisConfig.thickness, COLOR_BLACK, LINE_SOLID);
+
+  float single_space = (x1 - x0) / n;
+  for(int i = 0; i < n; i++){
+    fill_circle(buf,
+                x0 + single_space * (i + 0.5),
+                value_to_y(y_data[i], max_value, y0, y1, orientation),
+                cfg->dots_size,
+                COLOR_BLACK
+                );
+  }
 }
 
 void draw_pie_chart(uint8_t *buf, const PieChartConfig *cfg, char **x_data, float *y_data, int n)
