@@ -619,20 +619,21 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
       if(i+1 < n) suc = y_data[i+1];
       pos_x = x0 + single_space * (i + 0.5);
       pos_y = value_to_y(y_data[i], max_value, y0, y1, orientation);
+      int direction = orientation == ORIENT_BOTTOM_AXIS ? 1 : -1;
 
       if(prec < cur && suc < cur){
-        pos_y += 10; 
+        pos_y -= 10 * direction;
       }
       else if(prec > cur && suc > cur){
-        pos_y -= 10;
+        pos_y += 10 * direction;
       }
       else if(prec < cur && suc > cur){
-        pos_y += 10;
-        pos_x -= 10;
+        pos_y -= 10 * direction;
+        pos_x += 10;
       }
       else{
-        pos_y += 10;
-        pos_x += 10;
+        pos_y -= 10 * direction;
+        pos_x -= 10;
       }
       draw_rect(buf, pos_x - strlen(label) * 8 / 2 - 2, pos_x + strlen(label) * 8 / 2, pos_y - 2, pos_y + 8, 1, COLOR_BLACK, LINE_SOLID);
       fill_rect(buf, pos_x - strlen(label) * 8 / 2 - 1, pos_x + strlen(label) * 8 / 2 - 1, pos_y - 1, pos_y + 8 -1, COLOR_WHITE);

@@ -66,7 +66,25 @@ int main(void)
     .dots_size = 9,
     .axisConfig = sc_axis
   };
-  draw_scatter_chart(framebuffer, &sc_cfg, sc_labels, sc_data, 8, ORIENT_BOTTOM_AXIS);
+  // draw_scatter_chart(framebuffer, &sc_cfg, sc_labels, sc_data, 8, ORIENT_BOTTOM_AXIS);
+
+
+  /* --- test line chart --- */
+  char *ln_labels[] = {"1", "2", "3", "4", "5", "6", "7", "8"};
+  float ln_data[]   = {20, 35, 15, 42, 28, 50, 33, 46};
+  AxisConfig ln_axis = {
+    .thickness = 2, .title_size = 2,
+    .x_title = "sample", .y_title = "value",
+    .y_steps = 5, .dash_line = true
+  };
+  LineChartConfig ln_cfg = {
+    .x0 = 8, .x1 = 784, .y0 = 12, .y1 = 262,
+    .line_type = LINE_SOLID,
+    .line_thickness = 2,
+    .values_label = true,
+    .axisConfig = ln_axis
+  };
+  draw_line_chart(framebuffer, &ln_cfg, ln_labels, ln_data, 8, ORIENT_TOP_AXIS);
 
 
   save_pbm("output.pbm", framebuffer);
