@@ -18,6 +18,9 @@ Built and tested on a **CrowPanel ESP32 E-Paper 5.79"**, but the graphics layer 
 *Line chart — with value labels*
 ![line](docs/line.png)
 
+*Scatter chart — one filled dot per value*
+![scatter](docs/scatter.png)
+
 *Frequency heatmap — a grid of white / gray / black cells*
 ![heatmap](docs/freq.png)
 
@@ -25,7 +28,7 @@ All the charts above are produced by the runnable programs in [`examples/`](exam
 
 ## Features
 
-- **Charts**: bar, grouped bars, dual-axis bar, line, frequency heatmap *(pie chart is experimental)*
+- **Charts**: bar, grouped bars, dual-axis bar, line, scatter, frequency heatmap *(pie chart is experimental)*
 - **Orientation**: put the x-axis at the **bottom** (`ORIENT_BOTTOM_AXIS`) or at the **top** (`ORIENT_TOP_AXIS`)
 - **Legends** for multi-series charts, with swatches matching the series colors
 - **Primitives**: pixels, lines (any angle, via Bresenham), rectangles, circles, filled shapes
@@ -98,6 +101,7 @@ gcc examples/multi_bar_chart.c chart.c -o multi_bar && ./multi_bar   # -> multi_
 | [`multi_bar_chart.c`](examples/multi_bar_chart.c) | grouped bars + legend |
 | [`double_axis_chart.c`](examples/double_axis_chart.c) | dual-axis bars + legend |
 | [`line_chart.c`](examples/line_chart.c) | line chart with value labels |
+| [`scatter_chart.c`](examples/scatter_chart.c) | scatter chart with filled dots |
 | [`freq_chart.c`](examples/freq_chart.c) | frequency heatmap |
 
 ## On a PC (development & testing)
@@ -131,12 +135,13 @@ The graphics layer stays hardware-agnostic. On the device you:
 | `draw_multi_bar_chart` | grouped bars (multiple series) |
 | `draw_double_axis_bar_chart` | two series on two independent y-axes |
 | `draw_line_chart` | line chart |
+| `draw_scatter_chart` | scatter chart (filled dots) |
 | `draw_freq_chart` | frequency heatmap (grid of cells) |
 | `draw_pie_chart` | pie chart *(experimental)* |
-| `set_pixel`, `draw_line`, `draw_rect`, `fill_rect`, `draw_circle` | drawing primitives |
+| `set_pixel`, `draw_line`, `draw_rect`, `fill_rect`, `draw_circle`, `fill_circle` | drawing primitives |
 | `draw_char`, `draw_text` | text with scaling and rotation |
 
-The four chart functions above take an `Orientation` as their last argument.
+The bar, grouped-bar, dual-axis, line and scatter functions take an `Orientation` as their last argument.
 Every public function and config struct is documented in
 [`chart.h`](chart.h) (Doxygen style).
 
