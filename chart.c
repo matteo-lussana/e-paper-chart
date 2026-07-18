@@ -605,7 +605,7 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
               x0 + single_space * (i+1 + 0.5),
               value_to_y(y_data[i+1], max_value, y0, y1, orientation),
               cfg->line_thickness,
-              cfg->line_color,
+              COLOR_BLACK,
               cfg->line_type);
   }
   if(cfg->values_label)
@@ -636,7 +636,7 @@ void draw_line_chart(uint8_t *buf, const LineChartConfig *cfg, char **x_data, fl
       }
       draw_rect(buf, pos_x - strlen(label) * 8 / 2 - 2, pos_x + strlen(label) * 8 / 2, pos_y - 2, pos_y + 8, 1, COLOR_BLACK, LINE_SOLID);
       fill_rect(buf, pos_x - strlen(label) * 8 / 2 - 1, pos_x + strlen(label) * 8 / 2 - 1, pos_y - 1, pos_y + 8 -1, COLOR_WHITE);
-      draw_text(buf, pos_x - strlen(label) * 8 / 2, pos_y, label, cfg->line_color, 1, 0);
+      draw_text(buf, pos_x - strlen(label) * 8 / 2, pos_y, label, COLOR_BLACK, 1, 0);
     }
 }
 

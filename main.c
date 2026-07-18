@@ -64,7 +64,6 @@ int main(void)
   ScatterChartConfig sc_cfg = {
     .x0 = 8, .x1 = 784, .y0 = 12, .y1 = 262,
     .dots_size = 9,
-    .dot_color = COLOR_BLACK,
     .axisConfig = sc_axis
   };
   draw_scatter_chart(framebuffer, &sc_cfg, sc_labels, sc_data, 8, ORIENT_BOTTOM_AXIS);

@@ -82,7 +82,6 @@ typedef struct {
   int x0, x1, y0, y1;         /**< chart area: top-left (x0,y0) and bottom-right (x1,y1) corners in pixel*/
   LineType line_type;         /**< line style (LINE_SOLID = 0, LINE_DASHED = 1, LINE_DOTTED = 2)*/
   int line_thickness;         /**< thickness of the line*/
-  Color line_color;           /**< color of the line (COLOR_WHITE = 0, COLOR_BLACK = 1, COLOR_GRAY = 2)*/
   bool values_label;          /**< show the value above each point*/
   AxisConfig axisConfig;      /**< axis configuration (see AxisConfig)*/
 } LineChartConfig;
@@ -90,7 +89,6 @@ typedef struct {
 typedef struct {
   int x0, x1, y0, y1;         /**< chart area: top-left (x0,y0) and bottom-right (x1,y1) corners in pixel*/
   int dots_size;               /**< size of the dots for each value*/
-  Color dot_color;            /**< color of the line (COLOR_WHITE = 0, COLOR_BLACK = 1, COLOR_GRAY = 2)*/
   AxisConfig axisConfig;      /**< axis configuration (see AxisConfig)*/
 } ScatterChartConfig;
 

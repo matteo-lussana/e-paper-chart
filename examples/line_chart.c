@@ -23,7 +23,6 @@ int main(void)
         .x0 = 8, .x1 = 784, .y0 = 12, .y1 = 262,
         .line_type = LINE_SOLID,
         .line_thickness = 2,
-        .line_color = COLOR_BLACK,
         .values_label = true,
         .axisConfig = axis
     };
